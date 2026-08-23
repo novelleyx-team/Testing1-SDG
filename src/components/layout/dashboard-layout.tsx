@@ -19,7 +19,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const expectedPrefix = `/${user.role.toLowerCase()}`;
+    let expectedPrefix = `/${user.role.toLowerCase()}`;
+    if (user.role === "HOD" || user.role === "DEAN" || user.role === "LEADERSHIP") {
+      expectedPrefix = "/leadership";
+    }
+
     if (!pathname.startsWith(expectedPrefix)) {
       router.push(expectedPrefix);
     } else {

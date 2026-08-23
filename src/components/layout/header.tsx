@@ -48,12 +48,19 @@ export function Header() {
           </Link>
         )}
         
-        <Link href={`/${user?.role?.toLowerCase() || 'student'}/notifications`}>
-          <button className="relative p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 border-2 border-white dark:border-[#111827]"></span>
-          </button>
-        </Link>
+        {(() => {
+          const rolePrefix = (user?.role === "HOD" || user?.role === "DEAN" || user?.role === "LEADERSHIP") 
+            ? "leadership" 
+            : user?.role?.toLowerCase() || 'student';
+          return (
+            <Link href={`/${rolePrefix}/notifications`}>
+              <button className="relative p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                <Bell className="h-5 w-5" />
+                <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 border-2 border-white dark:border-[#111827]"></span>
+              </button>
+            </Link>
+          );
+        })()}
 
         <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-2"></div>
 
@@ -82,17 +89,28 @@ export function Header() {
                 </p>
                 <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mt-0.5">{user?.email || "user@novelleyx.com"}</p>
               </div>
-              <div className="p-2 space-y-1">
-                <Link href={`/${user?.role?.toLowerCase() || 'student'}/profile`} onClick={() => setIsProfileOpen(false)}>
-                  <button className="w-full text-left px-3 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-700 dark:hover:text-blue-400 rounded-xl transition-colors flex items-center gap-2">
-                    <UserCircle size={16} /> My Profile
-                  </button>
-                </Link>
-                <Link href={`/${user?.role?.toLowerCase() || 'student'}/settings`} onClick={() => setIsProfileOpen(false)}>
-                  <button className="w-full text-left px-3 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-700 dark:hover:text-blue-400 rounded-xl transition-colors flex items-center gap-2">
-                    <Settings size={16} /> Account Settings
-                  </button>
-                </Link>
+              <div className="py-1">
+                {(() => {
+                  const rolePrefix = (user?.role === "HOD" || user?.role === "DEAN" || user?.role === "LEADERSHIP") 
+                    ? "leadership" 
+                    : user?.role?.toLowerCase() || 'student';
+                  return (
+                    <>
+                      <Link href={`/${rolePrefix}/profile`} onClick={() => setIsProfileOpen(false)}>
+                        <button className="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors">
+                          <User className="mr-3 h-4 w-4" />
+                          Profile
+                        </button>
+                      </Link>
+                      <Link href={`/${rolePrefix}/settings`} onClick={() => setIsProfileOpen(false)}>
+                        <button className="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors">
+                          <Settings className="mr-3 h-4 w-4" />
+                          Settings
+                        </button>
+                      </Link>
+                    </>
+                  );
+                })()}
               </div>
               <div className="p-2 border-t border-gray-100 dark:border-gray-700/50">
                 <button 
