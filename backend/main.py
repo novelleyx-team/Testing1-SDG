@@ -153,7 +153,11 @@ app.add_middleware(
 )
 
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
-client = genai.Client(api_key=GEMINI_API_KEY)
+try:
+    client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
+except Exception as e:
+    print(f"Warning: Failed to initialize Gemini Client: {e}")
+    client = None
 
 # Define request model
 class ProjectSubmission(BaseModel):
