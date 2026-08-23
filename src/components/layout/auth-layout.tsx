@@ -124,18 +124,21 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
 
       {/* Right Pane - Form */}
       <div className="flex flex-1 flex-col relative bg-transparent lg:h-[100dvh]">
-        <Link 
-          href="/" 
-          className="absolute top-6 left-6 sm:top-8 sm:left-12 flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors group z-20 bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-sm"
-        >
-          <div className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm group-hover:bg-gray-50 transition-colors">
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-          </div>
-          <span className="hidden sm:inline pr-2">Back to Home</span>
-        </Link>
         <div className="flex-1 lg:overflow-y-auto px-4 sm:px-6 py-12 lg:px-8 flex flex-col justify-center">
           <div className="flex flex-col min-h-full lg:my-auto">
             <div className="w-full max-w-[420px] mx-auto my-auto pt-4 sm:pt-12 pb-8">
+              
+              <div className="flex justify-center mb-8">
+                <Link 
+                  href="/" 
+                  className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors group z-20 bg-white/80 backdrop-blur-sm p-1.5 pr-4 rounded-full shadow-sm border border-gray-200"
+                >
+                  <div className="w-8 h-8 rounded-full bg-white border border-gray-100 flex items-center justify-center shadow-sm group-hover:bg-gray-50 transition-colors">
+                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+                  </div>
+                  <span>Back to Home</span>
+                </Link>
+              </div>
 
           
           <div className="bg-white py-10 px-4 sm:px-10 shadow-sm rounded-2xl border border-gray-100 w-full">
