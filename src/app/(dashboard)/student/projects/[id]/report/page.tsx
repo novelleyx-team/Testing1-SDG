@@ -52,44 +52,18 @@ export default function ReportPage() {
   const projectId = params?.id as string;
   const projects = useProjectsStore((state) => state.projects);
 
-  const demoProjects = [
-    {
-      id: "PRJ-3042",
-      title: "Clean Water Filtration System",
-      abstract: "A low-cost water filtration system using local materials for rural areas.",
-      targetSdg: "SDG 6",
-      date: "Jul 10, 2026",
-      aiScore: "92/100",
-      status: "Approved",
-      studentName: "John Doe",
-      studentDepartment: "Engineering",
-    },
-    {
-      id: "PRJ-8193",
-      title: "Campus Solar Grid Extension",
-      abstract: "Proposal to add 50kW solar capacity to the engineering block roof.",
-      targetSdg: "SDG 7",
-      date: "Jul 15, 2026",
-      aiScore: "85/100",
-      status: "Pending",
-      studentName: "Jane Smith",
-      studentDepartment: "Environmental Science",
-    },
-    {
-      id: "PRJ-4421",
-      title: "Smart Waste Sorting Bin",
-      abstract: "AI-powered waste bin that automatically sorts recyclables from trash.",
-      targetSdg: "SDG 12",
-      date: "Jul 18, 2026",
-      aiScore: "78/100",
-      status: "Revision",
-      studentName: "Alex Johnson",
-      studentDepartment: "Computer Science",
-    }
-  ];
+  const project = projects.find(p => p.id === projectId);
 
-  // Try to find project in store or fallback to demo
-  const project = projects.find(p => p.id === projectId) || demoProjects.find(p => p.id === projectId) || demoProjects[0];
+  if (!project) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#0B1120]">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Project Not Found</h2>
+          <p className="text-gray-500 dark:text-gray-400">The project you are looking for does not exist or has been removed.</p>
+        </div>
+      </div>
+    );
+  }
 
   const targetSdgNumber = parseInt(project.targetSdg.replace(/[^0-9]/g, '')) || 1;
   const scoresData = generateMockScores(targetSdgNumber);

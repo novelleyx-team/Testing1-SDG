@@ -53,7 +53,7 @@ export default function AnalyticsPage() {
         <CardContent>
           <div className="h-[300px] w-full flex items-end justify-between gap-2 pt-10 px-4">
             {/* Mock Bar Chart */}
-            {[40, 65, 45, 80, 55, 90].map((height, i) => (
+            {[0, 0, 0, 0, 0, 0].map((height, i) => (
               <div key={i} className="w-full flex flex-col items-center gap-2 group relative">
                 {/* Tooltip */}
                 <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900 text-white text-xs py-1 px-2 rounded font-bold">

@@ -4,15 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Globe2, Target, TrendingUp } from "lucide-react"
 
 export default function SDGTrackingPage() {
-  // Mock data for SDG distribution
-  const sdgData = [
-    { id: "SDG 4", name: "Quality Education", count: 45, color: "bg-red-500" },
-    { id: "SDG 9", name: "Industry, Innovation and Infrastructure", count: 32, color: "bg-orange-500" },
-    { id: "SDG 11", name: "Sustainable Cities", count: 28, color: "bg-amber-500" },
-    { id: "SDG 3", name: "Good Health and Well-being", count: 24, color: "bg-green-500" },
-    { id: "SDG 13", name: "Climate Action", count: 18, color: "bg-emerald-600" },
-    { id: "SDG 7", name: "Affordable and Clean Energy", count: 15, color: "bg-yellow-400" },
-  ]
+  const sdgData: { id: string, name: string, count: number, color: string }[] = [];
 
   const totalProjects = sdgData.reduce((acc, curr) => acc + curr.count, 0)
 
@@ -29,7 +21,7 @@ export default function SDGTrackingPage() {
             <Globe2 className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-900 dark:text-blue-100">14 / 17</div>
+            <div className="text-2xl font-bold text-blue-900 dark:text-blue-100">0 / 17</div>
             <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Across all department projects</p>
           </CardContent>
         </Card>
@@ -39,8 +31,8 @@ export default function SDGTrackingPage() {
             <Target className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-900 dark:text-green-100">SDG 4</div>
-            <p className="text-xs text-green-600 dark:text-green-400 mt-1">Quality Education (28%)</p>
+            <div className="text-2xl font-bold text-green-900 dark:text-green-100">None</div>
+            <p className="text-xs text-green-600 dark:text-green-400 mt-1">N/A (0%)</p>
           </CardContent>
         </Card>
         <Card className="rounded-xl border-purple-100 dark:border-purple-900/50 bg-purple-50/50 dark:bg-purple-900/10">
@@ -49,8 +41,8 @@ export default function SDGTrackingPage() {
             <TrendingUp className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-900 dark:text-purple-100">+12%</div>
-            <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">Compared to last semester</p>
+            <div className="text-2xl font-bold text-purple-900 dark:text-purple-100">+0%</div>
+            <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">vs last semester</p>
           </CardContent>
         </Card>
       </div>

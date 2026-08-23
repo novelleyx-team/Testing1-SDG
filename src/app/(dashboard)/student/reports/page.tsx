@@ -4,15 +4,7 @@ import { Card } from "@/components/ui/card";
 import { FileText, Download, Clock, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const mockReports = [
-  { id: "REP-995", title: "Global Climate Action Initiative", type: "Full Report", date: "Nov 20, 2026", status: "Ready", size: "3.1 MB" },
-  { id: "REP-994", title: "Renewable Energy Certificate - SDG 7", type: "Certificate", date: "Nov 10, 2026", status: "Ready", size: "1.5 MB" },
-  { id: "REP-993", title: "Community Education Outreach", type: "Interim", date: "Nov 01, 2026", status: "Processing", size: "--" },
-  { id: "REP-992", title: "Official SDG Certificate - SDG 6", type: "Certificate", date: "Oct 15, 2026", status: "Ready", size: "1.2 MB" },
-  { id: "REP-991", title: "Clean Water Filtration Impact Report", type: "Full Report", date: "Oct 14, 2026", status: "Ready", size: "4.5 MB" },
-  { id: "REP-884", title: "Campus Vertical Farming Analysis", type: "Full Report", date: "Jul 05, 2026", status: "Ready", size: "3.8 MB" },
-  { id: "REP-882", title: "Smart Grid Interim Review", type: "Interim", date: "Sep 30, 2026", status: "Processing", size: "--" },
-];
+const mockReports: { id: string, title: string, type: string, date: string, status: string, size: string }[] = [];
 
 export default function ReportsPage() {
   return (

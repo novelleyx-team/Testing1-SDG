@@ -10,14 +10,7 @@ export default function StudentsPage() {
   const department = user?.department || "Computer Science"
 
   // Generate exactly 20 mock students for the faculty's department
-  const students = Array.from({ length: 20 }).map((_, i) => ({
-    id: `STU-${1000 + i}`,
-    name: `Student ${i + 1}`,
-    department: department,
-    ongoingProjects: Math.floor(Math.random() * 3) + 1,
-    avgSdgScore: (Math.random() * 3 + 6).toFixed(1) + "/10",
-    status: Math.random() > 0.1 ? "Active" : "Inactive",
-  }))
+  const students: { id: string, name: string, department: string, ongoingProjects: number, avgSdgScore: string, status: string }[] = [];
 
   return (
     <div className="flex-1 space-y-8 p-8 pt-6">
