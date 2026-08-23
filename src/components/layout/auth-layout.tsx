@@ -123,18 +123,19 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Right Pane - Form */}
-      <div className="flex flex-1 flex-col px-4 sm:px-6 py-12 lg:px-8 bg-transparent relative overflow-y-auto">
-        <div className="flex-1 flex flex-col justify-center min-h-full pt-16 sm:pt-0">
+      <div className="flex flex-1 flex-col relative bg-transparent">
         <Link 
           href="/" 
-          className="absolute top-6 left-6 sm:top-8 sm:left-12 flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors group z-20"
+          className="absolute top-6 left-6 sm:top-8 sm:left-12 flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors group z-20 bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-sm"
         >
           <div className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm group-hover:bg-gray-50 transition-colors">
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
           </div>
-          <span className="hidden sm:inline">Back to Home</span>
+          <span className="hidden sm:inline pr-2">Back to Home</span>
         </Link>
-          <div className="w-full max-w-[420px] mx-auto">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-12 lg:px-8">
+          <div className="flex flex-col min-h-full">
+            <div className="w-full max-w-[420px] mx-auto my-auto pt-16 sm:pt-12 pb-8">
           {/* Mobile logo (visible only on small screens) */}
           <div className="lg:hidden flex flex-col items-center mb-8">
             <div className="w-10 h-10 rounded-[10px] bg-[#2563EB] flex items-center justify-center shadow-md mb-3">
@@ -146,7 +147,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
           
           <div className="bg-white py-10 px-4 sm:px-10 shadow-sm rounded-2xl border border-gray-100 w-full">
             {children}
-          </div>
+            </div>
           </div>
         </div>
       </div>
