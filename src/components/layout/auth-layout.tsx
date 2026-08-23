@@ -26,9 +26,9 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
   ];
 
   return (
-    <div className="h-[100dvh] w-full overflow-hidden flex font-sans bg-gradient-to-br from-blue-50 via-white to-sky-100">
-      {/* Left Pane - Branding & SDGs (Hidden on mobile) */}
-      <div className="hidden lg:flex lg:w-1/2 bg-transparent text-gray-900 flex-col p-8 xl:p-12 relative overflow-hidden">
+    <div className="min-h-[100dvh] w-full flex flex-col lg:flex-row font-sans bg-gradient-to-br from-blue-50 via-white to-sky-100 lg:overflow-hidden">
+      {/* Left Pane - Branding & SDGs (Visible on all devices) */}
+      <div className="flex w-full lg:w-1/2 lg:h-[100dvh] bg-transparent text-gray-900 flex-col p-6 sm:p-8 xl:p-12 relative overflow-hidden shrink-0">
         {/* Abstract background effect */}
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03]"></div>
         <div className="absolute -top-[20%] -left-[10%] w-[70%] h-[70%] rounded-full bg-[#2563EB] opacity-10 blur-[120px]"></div>
@@ -91,13 +91,13 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
 
         {/* SDG Grid Display */}
         <div className="relative z-10 w-full flex-1 min-h-0 flex flex-col">
-          <div className="flex items-center gap-3 mb-4 shrink-0">
+          <div className="flex items-center gap-3 mb-4 shrink-0 mt-8 lg:mt-0">
             <Target className="w-5 h-5 xl:w-6 xl:h-6 text-[#2563EB]" />
             <span className="text-[15px] xl:text-[17px] font-extrabold text-gray-800 uppercase tracking-widest leading-none">
               THE 17 SUSTAINABLE DEVELOPMENT GOALS (SDG)
             </span>
           </div>
-          <div className="grid grid-cols-2 gap-2 flex-1 overflow-y-auto pr-2 pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 flex-1 lg:overflow-y-auto pr-2 pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
             {sdgs.map((sdg, index) => {
               const Icon = sdg.icon;
               return (
@@ -123,7 +123,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Right Pane - Form */}
-      <div className="flex flex-1 flex-col relative bg-transparent">
+      <div className="flex flex-1 flex-col relative bg-transparent lg:h-[100dvh]">
         <Link 
           href="/" 
           className="absolute top-6 left-6 sm:top-8 sm:left-12 flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors group z-20 bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-sm"
@@ -133,17 +133,10 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
           </div>
           <span className="hidden sm:inline pr-2">Back to Home</span>
         </Link>
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-12 lg:px-8">
-          <div className="flex flex-col min-h-full">
-            <div className="w-full max-w-[420px] mx-auto my-auto pt-16 sm:pt-12 pb-8">
-          {/* Mobile logo (visible only on small screens) */}
-          <div className="lg:hidden flex flex-col items-center mb-8">
-            <div className="w-10 h-10 rounded-[10px] bg-[#2563EB] flex items-center justify-center shadow-md mb-3">
-              <Globe2 className="text-white h-6 w-6" />
-            </div>
-            <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">NOVELLEYX</h2>
-            <p className="text-sm text-gray-500 mt-1">SDG AI Assistance Platform</p>
-          </div>
+        <div className="flex-1 lg:overflow-y-auto px-4 sm:px-6 py-12 lg:px-8 flex flex-col justify-center">
+          <div className="flex flex-col min-h-full lg:my-auto">
+            <div className="w-full max-w-[420px] mx-auto my-auto pt-4 sm:pt-12 pb-8">
+
           
           <div className="bg-white py-10 px-4 sm:px-10 shadow-sm rounded-2xl border border-gray-100 w-full">
             {children}
