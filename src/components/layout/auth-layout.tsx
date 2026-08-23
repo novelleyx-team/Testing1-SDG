@@ -150,6 +150,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </div>
+        </div>
       </div>
     </div>
   );
