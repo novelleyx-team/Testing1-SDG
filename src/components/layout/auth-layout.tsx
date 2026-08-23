@@ -123,7 +123,8 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Right Pane - Form */}
-      <div className="flex flex-1 flex-col justify-center px-6 py-12 lg:px-8 bg-transparent relative">
+      <div className="flex flex-1 flex-col px-6 py-12 lg:px-8 bg-transparent relative overflow-y-auto">
+        <div className="flex-1 flex flex-col justify-center min-h-full">
         <Link 
           href="/" 
           className="absolute top-8 left-8 sm:left-12 flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors group"
@@ -145,6 +146,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
           
           <div className="bg-white py-10 px-6 sm:px-10 shadow-sm rounded-2xl border border-gray-100">
             {children}
+          </div>
           </div>
         </div>
       </div>
