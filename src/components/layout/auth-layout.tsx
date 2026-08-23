@@ -26,7 +26,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
   ];
 
   return (
-    <div className="h-screen w-screen overflow-hidden flex font-sans bg-gradient-to-br from-blue-50 via-white to-sky-100">
+    <div className="h-[100dvh] w-full overflow-hidden flex font-sans bg-gradient-to-br from-blue-50 via-white to-sky-100">
       {/* Left Pane - Branding & SDGs (Hidden on mobile) */}
       <div className="hidden lg:flex lg:w-1/2 bg-transparent text-gray-900 flex-col p-8 xl:p-12 relative overflow-hidden">
         {/* Abstract background effect */}
@@ -123,18 +123,18 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Right Pane - Form */}
-      <div className="flex flex-1 flex-col px-6 py-12 lg:px-8 bg-transparent relative overflow-y-auto">
-        <div className="flex-1 flex flex-col justify-center min-h-full">
+      <div className="flex flex-1 flex-col px-4 sm:px-6 py-12 lg:px-8 bg-transparent relative overflow-y-auto">
+        <div className="flex-1 flex flex-col justify-center min-h-full pt-16 sm:pt-0">
         <Link 
           href="/" 
-          className="absolute top-8 left-8 sm:left-12 flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors group"
+          className="absolute top-6 left-6 sm:top-8 sm:left-12 flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors group z-20"
         >
           <div className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm group-hover:bg-gray-50 transition-colors">
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
           </div>
           <span className="hidden sm:inline">Back to Home</span>
         </Link>
-        <div className="sm:mx-auto sm:w-full sm:max-w-[420px]">
+          <div className="w-full max-w-[420px] mx-auto">
           {/* Mobile logo (visible only on small screens) */}
           <div className="lg:hidden flex flex-col items-center mb-8">
             <div className="w-10 h-10 rounded-[10px] bg-[#2563EB] flex items-center justify-center shadow-md mb-3">
@@ -144,7 +144,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
             <p className="text-sm text-gray-500 mt-1">SDG AI Assistance Platform</p>
           </div>
           
-          <div className="bg-white py-10 px-6 sm:px-10 shadow-sm rounded-2xl border border-gray-100">
+          <div className="bg-white py-10 px-4 sm:px-10 shadow-sm rounded-2xl border border-gray-100 w-full">
             {children}
           </div>
           </div>
