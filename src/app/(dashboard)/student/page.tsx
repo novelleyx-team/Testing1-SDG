@@ -32,23 +32,23 @@ export default function StudentDashboard() {
   return (
     <div className="space-y-10 pb-20 animate-in fade-in duration-0">
       {/* 1. Welcome Banner */}
-      <section className="bg-white rounded-[18px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] p-8 border border-gray-100 relative overflow-hidden group">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full blur-3xl -mr-20 -mt-20 transition-transform duration-700 group-hover:scale-110"></div>
+      <section className="bg-white dark:bg-[#1F2937] rounded-[18px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] p-8 border border-gray-100 dark:border-gray-800 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-full blur-3xl -mr-20 -mt-20 transition-transform duration-700 group-hover:scale-110"></div>
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <h1 className="text-[40px] font-bold text-gray-900 tracking-tight leading-tight">
+            <h1 className="text-[40px] font-bold text-gray-900 dark:text-gray-100 tracking-tight leading-tight">
               Good Afternoon, {user?.name.split(' ')[0] || 'Abhinav'} 👋
             </h1>
-            <p className="text-[16px] text-gray-500 mt-2 max-w-xl leading-relaxed">
+            <p className="text-[16px] text-gray-500 dark:text-gray-400 mt-2 max-w-xl leading-relaxed">
               Track your SDG submissions, AI-generated reports, faculty reviews, and personal SDG impact analysis.
             </p>
           </div>
-          <div className="flex items-center gap-4 bg-gray-50/80 backdrop-blur-sm p-4 rounded-[16px] border border-gray-100">
-            <div className="text-center px-4 border-r border-gray-200">
-              <p className="text-2xl font-bold text-gray-900">4</p>
+          <div className="flex items-center gap-4 bg-gray-50/80 dark:bg-gray-800/80 backdrop-blur-sm p-4 rounded-[16px] border border-gray-100 dark:border-gray-700">
+            <div className="text-center px-4 border-r border-gray-200 dark:border-gray-700">
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">4</p>
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Projects</p>
             </div>
-            <div className="text-center px-4 border-r border-gray-200">
+            <div className="text-center px-4 border-r border-gray-200 dark:border-gray-700">
               <p className="text-2xl font-bold text-blue-600">8.4</p>
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Score</p>
             </div>
@@ -69,14 +69,14 @@ export default function StudentDashboard() {
               <p className="text-sm font-semibold text-gray-500 flex items-center gap-2">
                 <Folder size={16} /> Projects Submitted
               </p>
-              <h3 className="text-[36px] font-bold text-gray-900 mt-2">{studentProjects.length < 10 ? `0${studentProjects.length}` : studentProjects.length}</h3>
+              <h3 className="text-[36px] font-bold text-gray-900 dark:text-gray-100 mt-2">{studentProjects.length < 10 ? `0${studentProjects.length}` : studentProjects.length}</h3>
             </div>
-            <div className="bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full text-xs font-bold">
+            <div className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2.5 py-1 rounded-full text-xs font-bold">
               Total Count
             </div>
           </div>
           <div className="mt-6">
-            <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+            <div className="h-2 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
               <div className="h-full bg-blue-600 rounded-full w-[70%] transition-all duration-0"></div>
             </div>
           </div>
@@ -89,16 +89,16 @@ export default function StudentDashboard() {
               <p className="text-sm font-semibold text-gray-500 flex items-center gap-2">
                 <Brain size={16} /> AI SDG Score
               </p>
-              <h3 className="text-[36px] font-bold text-gray-900 mt-2 flex items-baseline gap-2">
+              <h3 className="text-[36px] font-bold text-gray-900 dark:text-gray-100 mt-2 flex items-baseline gap-2">
                 {studentProjects.length > 0 ? (studentProjects.reduce((acc, p) => acc + (parseFloat(p.aiScore) || 0), 0) / studentProjects.length).toFixed(1) : "0.0"} <span className="text-sm font-normal text-gray-400">/ 10</span>
               </h3>
             </div>
-            <div className="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-xs font-bold">
+            <div className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2.5 py-1 rounded-full text-xs font-bold">
               {studentProjects.length > 0 ? "Analyzed" : "N/A"}
             </div>
           </div>
           <div className="mt-6 flex items-center gap-3">
-            <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+            <div className="h-2 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
               <div className={`h-full bg-indigo-600 rounded-full transition-all duration-0`} style={{width: `${studentProjects.length > 0 ? (studentProjects.reduce((acc, p) => acc + (parseFloat(p.aiScore) || 0), 0) / studentProjects.length) * 10 : 0}%`}}></div>
             </div>
             <span className="text-xs font-bold text-indigo-600">
@@ -108,17 +108,17 @@ export default function StudentDashboard() {
         </Card>
 
         {/* Card 3 */}
-        <Card className="rounded-[18px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] border-none p-6 bg-gradient-to-br from-white to-orange-50/30 transition-all duration-0 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.08)] group">
+        <Card className="rounded-[18px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] border-none p-6 bg-gradient-to-br from-white to-orange-50/30 dark:from-[#1F2937] dark:to-orange-900/10 transition-all duration-0 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.08)] group">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm font-semibold text-gray-500 flex items-center gap-2">
                 <Clock size={16} /> Upcoming Deadlines
               </p>
-              <h3 className="text-[36px] font-bold text-gray-900 mt-2">0</h3>
+              <h3 className="text-[36px] font-bold text-gray-900 dark:text-gray-100 mt-2">0</h3>
             </div>
           </div>
-          <div className="mt-5 bg-orange-100/50 rounded-xl p-3 border border-orange-100">
-            <p className="text-xs font-semibold text-orange-800 flex justify-between">
+          <div className="mt-5 bg-orange-100/50 dark:bg-orange-900/20 rounded-xl p-3 border border-orange-100 dark:border-orange-800/50">
+            <p className="text-xs font-semibold text-orange-800 dark:text-orange-400 flex justify-between">
               <span>No Upcoming Deadlines</span>
               <span>--</span>
             </p>
@@ -136,7 +136,7 @@ export default function StudentDashboard() {
           
           {/* AI Suggestions Card */}
           {studentProjects.length > 0 ? (
-            <Card className="rounded-[18px] shadow-[0_8px_30px_rgba(37,99,235,0.06)] border border-blue-100 p-8 bg-gradient-to-br from-white to-blue-50/30">
+            <Card className="rounded-[18px] shadow-[0_8px_30px_rgba(37,99,235,0.06)] border border-blue-100 dark:border-blue-900/50 p-8 bg-gradient-to-br from-white to-blue-50/30 dark:from-[#1F2937] dark:to-blue-900/10">
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-2.5 bg-blue-600 rounded-xl text-white shadow-md">
                   <Lightbulb size={20} />
@@ -146,23 +146,23 @@ export default function StudentDashboard() {
               <div className="space-y-4">
                 <div className="flex items-start gap-4">
                   <CheckCircle2 className="text-green-500 mt-0.5 shrink-0" size={18} />
-                  <p className="text-[15px] text-gray-700">Your latest abstract could better align with <strong className="text-gray-900">SDG 13 (Climate Action)</strong> by focusing on mitigation strategies.</p>
+                  <p className="text-[15px] text-gray-700 dark:text-gray-300">Your latest abstract could better align with <strong className="text-gray-900 dark:text-gray-100">SDG 13 (Climate Action)</strong> by focusing on mitigation strategies.</p>
                 </div>
                 <div className="flex items-start gap-4">
                   <CheckCircle2 className="text-green-500 mt-0.5 shrink-0" size={18} />
-                  <div className="text-[15px] text-gray-700">
+                  <div className="text-[15px] text-gray-700 dark:text-gray-300">
                     Add these high-impact keywords to your submission:
                     <div className="flex gap-2 mt-3">
-                      <span className="px-3 py-1 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-gray-600 shadow-sm">Renewable Energy</span>
-                      <span className="px-3 py-1 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-gray-600 shadow-sm">Carbon Emission</span>
-                      <span className="px-3 py-1 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-gray-600 shadow-sm">Sustainability</span>
+                      <span className="px-3 py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs font-semibold text-gray-600 dark:text-gray-300 shadow-sm">Renewable Energy</span>
+                      <span className="px-3 py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs font-semibold text-gray-600 dark:text-gray-300 shadow-sm">Carbon Emission</span>
+                      <span className="px-3 py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs font-semibold text-gray-600 dark:text-gray-300 shadow-sm">Sustainability</span>
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="mt-8 pt-6 border-t border-blue-100/60 flex items-center justify-between">
+              <div className="mt-8 pt-6 border-t border-blue-100/60 dark:border-blue-900/40 flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">Estimated Score Improvement</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Estimated Score Improvement</p>
                   <p className="text-2xl font-black text-green-600 mt-1">+0.7 pts</p>
                 </div>
                 <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-6 py-6 font-semibold shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] transition-all hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:-translate-y-0.5 group">
@@ -171,39 +171,39 @@ export default function StudentDashboard() {
               </div>
             </Card>
           ) : (
-            <Card className="rounded-[18px] shadow-[0_8px_30px_rgba(37,99,235,0.06)] border border-blue-100 p-8 bg-gradient-to-br from-white to-blue-50/30 text-center">
-              <div className="p-4 bg-blue-100/50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+            <Card className="rounded-[18px] shadow-[0_8px_30px_rgba(37,99,235,0.06)] border border-blue-100 dark:border-blue-900/50 p-8 bg-gradient-to-br from-white to-blue-50/30 dark:from-[#1F2937] dark:to-blue-900/10 text-center">
+              <div className="p-4 bg-blue-100/50 dark:bg-blue-900/30 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                 <Brain className="text-blue-600" size={32} />
               </div>
               <h3 className="text-[18px] font-bold text-gray-900 dark:text-gray-100 mb-2">No AI Suggestions Yet</h3>
-              <p className="text-gray-500">Submit your first project to receive personalized AI recommendations and score improvements.</p>
+              <p className="text-gray-500 dark:text-gray-400">Submit your first project to receive personalized AI recommendations and score improvements.</p>
             </Card>
           )}
 
           {/* Recent Projects */}
           <Card className="rounded-[18px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] border-none p-0 overflow-hidden">
             <div className="p-8 pb-4 flex items-center justify-between">
-              <h3 className="text-[18px] font-bold text-gray-900">Recent Projects</h3>
+              <h3 className="text-[18px] font-bold text-gray-900 dark:text-gray-100">Recent Projects</h3>
               <Button variant="ghost" className="text-blue-600 hover:bg-blue-50 font-semibold rounded-xl">View All</Button>
             </div>
-            <div className="divide-y divide-gray-50">
+            <div className="divide-y divide-gray-50 dark:divide-gray-800">
               {studentProjects.length === 0 ? (
                 <EmptyState title="No Projects Found" description="You haven't submitted any projects yet." />
               ) : (
                 studentProjects.slice(0, 3).map((project) => (
-                  <div key={project.id} className="p-8 hover:bg-gray-50/50 transition-colors group">
+                  <div key={project.id} className="p-8 hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors group">
                     <div className="flex justify-between items-start">
                       <div className="space-y-3">
                         <div className="flex items-center gap-3">
-                          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-md text-xs font-bold border border-blue-100">
+                          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-md text-xs font-bold border border-blue-100 dark:border-blue-900/50">
                             <Droplets size={12} /> {project.targetSdg}
                           </div>
-                          <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">
+                          <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-1 rounded-md">
                             <CheckCircle2 size={12} /> {project.status}
                           </span>
                         </div>
-                        <h4 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{project.title}</h4>
-                        <p className="text-sm text-gray-500 font-medium">Updated {project.date}</p>
+                        <h4 className="text-lg font-bold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 transition-colors">{project.title}</h4>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Updated {project.date}</p>
                       </div>
                       <div className="text-right">
                         <div className="bg-gray-900 text-white px-3 py-1.5 rounded-lg text-sm font-bold shadow-sm inline-block">
@@ -239,7 +239,7 @@ export default function StudentDashboard() {
 
           {/* Activity Timeline */}
           <Card className="rounded-[18px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] border-none p-8">
-            <h3 className="text-[18px] font-bold text-gray-900 mb-6">Recent Activity</h3>
+            <h3 className="text-[18px] font-bold text-gray-900 dark:text-gray-100 mb-6">Recent Activity</h3>
             {studentProjects.length === 0 ? (
               <p className="text-sm text-gray-500 italic">No activity yet. Submit a project to start tracking!</p>
             ) : (
@@ -247,7 +247,7 @@ export default function StudentDashboard() {
                 <div className="relative flex items-start gap-4">
                   <div className="absolute left-0 -ml-[5px] mt-1 h-3 w-3 rounded-full border-2 border-white bg-blue-600 shadow-sm z-10"></div>
                   <div className="ml-5">
-                    <p className="text-[14px] font-bold text-gray-900">Project Submitted</p>
+                    <p className="text-[14px] font-bold text-gray-900 dark:text-gray-100">Project Submitted</p>
                     <p className="text-[12px] font-medium text-gray-500 mt-0.5">Recently</p>
                   </div>
                 </div>

@@ -93,7 +93,7 @@ export default function ReportPage() {
       <div className="max-w-[210mm] min-h-[297mm] mx-auto bg-white text-black p-[20mm] shadow-2xl print:shadow-none print:m-0 print:p-0 print:w-auto overflow-hidden text-[11pt] leading-[1.4] font-serif border border-gray-200">
         
         {/* 1. Letterhead Placeholder */}
-        <div className="w-full h-32 border-b-2 border-gray-200 flex items-center justify-center bg-gray-50 mb-8 relative">
+        <div className="w-full h-32 border-b-2 border-gray-200 dark:border-gray-700 flex items-center justify-center bg-gray-50 dark:bg-gray-800/50 mb-8 relative">
           {/* USER: Replace the image below with your actual letterhead */}
           <span className="text-gray-400 font-sans tracking-widest text-xl uppercase absolute z-0">
             [ LETTERHEAD PLACEHOLDER ]
@@ -103,45 +103,45 @@ export default function ReportPage() {
 
         {/* 2. Document Title */}
         <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold font-sans tracking-tight text-gray-900 uppercase">AI-Evaluated SDG Impact Report</h1>
+          <h1 className="text-3xl font-bold font-sans tracking-tight text-gray-900 dark:text-gray-100 uppercase">AI-Evaluated SDG Impact Report</h1>
           <p className="text-gray-500 mt-2 font-sans text-sm">Generated securely via AI Assessment Engine</p>
         </div>
 
         {/* 3. Project Details */}
-        <div className="mb-10 grid grid-cols-2 gap-6 p-6 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="mb-10 grid grid-cols-2 gap-6 p-6 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
           <div>
             <p className="font-bold text-gray-400 font-sans text-xs uppercase mb-1">Project Title</p>
-            <p className="font-bold text-lg">{project.title}</p>
+            <p className="font-bold text-lg text-gray-900 dark:text-gray-100">{project.title}</p>
           </div>
           <div>
             <p className="font-bold text-gray-400 font-sans text-xs uppercase mb-1">Project ID</p>
-            <p className="font-mono">{project.id}</p>
+            <p className="font-mono text-gray-900 dark:text-gray-100">{project.id}</p>
           </div>
           <div>
             <p className="font-bold text-gray-400 font-sans text-xs uppercase mb-1">Author Details</p>
-            <p className="font-semibold">{project.studentName}</p>
-            <p className="text-sm text-gray-600">{project.studentDepartment}</p>
+            <p className="font-semibold text-gray-900 dark:text-gray-100">{project.studentName}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">{project.studentDepartment}</p>
           </div>
           <div>
             <p className="font-bold text-gray-400 font-sans text-xs uppercase mb-1">Evaluation Date</p>
-            <p className="font-semibold">{project.date}</p>
+            <p className="font-semibold text-gray-900 dark:text-gray-100">{project.date}</p>
             <p className="font-bold text-blue-600 mt-2">Primary Target: {project.targetSdg}</p>
           </div>
         </div>
 
         <div className="mb-8">
-          <p className="font-bold text-gray-800 border-b border-gray-300 pb-2 mb-2 font-sans">Abstract</p>
-          <p className="text-gray-700 italic">&ldquo;{project.abstract}&rdquo;</p>
+          <p className="font-bold text-gray-800 dark:text-gray-200 border-b border-gray-300 dark:border-gray-700 pb-2 mb-2 font-sans">Abstract</p>
+          <p className="text-gray-700 dark:text-gray-300 italic">&ldquo;{project.abstract}&rdquo;</p>
         </div>
 
         {/* 4. Radar Maps */}
         <div className="mb-12 font-sans break-inside-avoid">
-          <h2 className="text-xl font-bold border-b border-gray-300 pb-2 mb-6 text-gray-900">1. Impact Analysis Radars</h2>
+          <h2 className="text-xl font-bold border-b border-gray-300 dark:border-gray-700 pb-2 mb-6 text-gray-900 dark:text-gray-100">1. Impact Analysis Radars</h2>
           
           <div className="flex flex-col md:flex-row gap-8 items-center justify-between">
             {/* Chart 1: All SDGs */}
             <div className="w-full md:w-1/2 flex flex-col items-center">
-              <h3 className="font-bold text-sm text-gray-600 mb-2 uppercase">Global 17 SDG Coverage</h3>
+              <h3 className="font-bold text-sm text-gray-600 dark:text-gray-400 mb-2 uppercase">Global 17 SDG Coverage</h3>
               <div className="w-full h-64 relative">
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart cx="50%" cy="50%" outerRadius="70%" data={scoresData}>
@@ -155,7 +155,7 @@ export default function ReportPage() {
 
             {/* Chart 2: Matching SDGs */}
             <div className="w-full md:w-1/2 flex flex-col items-center">
-              <h3 className="font-bold text-sm text-gray-600 mb-2 uppercase">Primary Alignment (Score &gt; 40)</h3>
+              <h3 className="font-bold text-sm text-gray-600 dark:text-gray-400 mb-2 uppercase">Primary Alignment (Score &gt; 40)</h3>
               <div className="w-full h-64 relative">
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart cx="50%" cy="50%" outerRadius="70%" data={matchingData}>
@@ -171,11 +171,11 @@ export default function ReportPage() {
 
         {/* 5. 17 SDG Marking Grid */}
         <div className="mb-12 break-inside-avoid">
-          <h2 className="text-xl font-bold border-b border-gray-300 pb-2 mb-4 font-sans text-gray-900">2. Comprehensive SDG Scores</h2>
+          <h2 className="text-xl font-bold border-b border-gray-300 dark:border-gray-700 pb-2 mb-4 font-sans text-gray-900 dark:text-gray-100">2. Comprehensive SDG Scores</h2>
           <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
             {scoresData.map((sdg) => (
-              <div key={sdg.id} className="flex items-center justify-between border-b border-gray-100 py-1">
-                <span className={sdg.score >= 50 ? "font-bold text-blue-700" : "text-gray-600"}>{sdg.name}</span>
+              <div key={sdg.id} className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 py-1">
+                <span className={sdg.score >= 50 ? "font-bold text-blue-700 dark:text-blue-400" : "text-gray-600 dark:text-gray-400"}>{sdg.name}</span>
                 <span className={`font-mono font-bold ${sdg.score >= 80 ? 'text-green-600' : sdg.score >= 40 ? 'text-blue-600' : 'text-gray-400'}`}>
                   {sdg.score}/100
                 </span>
@@ -186,30 +186,30 @@ export default function ReportPage() {
 
         {/* 6. Summary & Notes */}
         <div className="mb-16 break-inside-avoid">
-          <h2 className="text-xl font-bold border-b border-gray-300 pb-2 mb-4 font-sans text-gray-900">3. AI Evaluation Summary</h2>
-          <p className="mb-4 text-justify">
+          <h2 className="text-xl font-bold border-b border-gray-300 dark:border-gray-700 pb-2 mb-4 font-sans text-gray-900 dark:text-gray-100">3. AI Evaluation Summary</h2>
+          <p className="mb-4 text-justify text-gray-800 dark:text-gray-200">
             The submitted project heavily targets <strong>{project.targetSdg}</strong>, scoring a strong primary alignment metric. Secondary impacts were recorded across related dimensions, demonstrating a multi-faceted approach to sustainable development. The proposed solutions show significant promise if implemented effectively with adequate resource allocation.
           </p>
-          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
-            <h4 className="font-bold text-yellow-800 font-sans mb-1 text-sm">Faculty / Reviewer Notes</h4>
-            <p className="text-yellow-900 italic text-sm">
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 dark:border-yellow-600 p-4 mb-4">
+            <h4 className="font-bold text-yellow-800 dark:text-yellow-400 font-sans mb-1 text-sm">Faculty / Reviewer Notes</h4>
+            <p className="text-yellow-900 dark:text-yellow-300 italic text-sm">
               &ldquo;Innovative approach. Consider elaborating on the long-term maintenance requirements to ensure true sustainability and exploring deeper partnerships as outlined in SDG 17.&rdquo;
             </p>
           </div>
         </div>
 
         {/* 7. Approval Block */}
-        <div className="mt-16 pt-8 border-t-2 border-gray-800 break-inside-avoid font-sans">
+        <div className="mt-16 pt-8 border-t-2 border-gray-800 dark:border-gray-400 break-inside-avoid font-sans">
           <div className="flex justify-between items-end">
             <div>
-              <p className="font-bold text-gray-800 text-lg">AI Evaluator Engine</p>
+              <p className="font-bold text-gray-800 dark:text-gray-200 text-lg">AI Evaluator Engine</p>
               <p className="text-gray-500 text-sm mt-1">Verified Digital Signature: <span className="font-mono">SYS-{Math.floor(Math.random()*90000)+10000}</span></p>
               <p className="text-gray-500 text-sm">Timestamp: {new Date().toLocaleString()}</p>
             </div>
             
             <div className="w-64 text-center">
-              <div className="border-b border-black h-12 mb-2"></div>
-              <p className="font-bold text-gray-800 uppercase text-sm">Faculty / Committee Approval</p>
+              <div className="border-b border-black dark:border-gray-400 h-12 mb-2"></div>
+              <p className="font-bold text-gray-800 dark:text-gray-200 uppercase text-sm">Faculty / Committee Approval</p>
               <p className="text-gray-500 text-xs mt-1">Sign and Date</p>
             </div>
           </div>
