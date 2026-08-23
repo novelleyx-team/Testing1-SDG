@@ -42,7 +42,9 @@ export function ProjectForm() {
       studentDepartment: user.department || 'General',
       title: data.title,
       abstract: data.abstract,
-      techStack: data.techStack
+      techStack: data.techStack,
+      targetSdg: "N/A",
+      aiScore: "N/A"
     })
     
     // Redirect back to projects list

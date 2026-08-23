@@ -9,8 +9,8 @@ import { useAchievementsStore } from "@/store/achievements-store";
 
 export default function AchievementsPage() {
   const { user } = useAuthStore();
-  const getStudentProjects = useProjectsStore(state => state.getStudentProjects);
-  const projects = user ? getStudentProjects(user.id) : [];
+  const allProjects = useProjectsStore(state => state.projects);
+  const projects = user ? allProjects.filter(p => p.studentId === user.id) : [];
   const globalBadges = useAchievementsStore(state => state.badges);
 
   const dynamicBadges = projects.flatMap((project: Project) => {
@@ -64,7 +64,8 @@ export default function AchievementsPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {allBadges.map((badge: Record<string, unknown>) => (
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        {allBadges.map((badge: any) => (
           <Card 
             key={badge.id} 
             className={`rounded-[18px] p-6 border transition-all duration-0 relative overflow-hidden flex flex-col items-center text-center ${

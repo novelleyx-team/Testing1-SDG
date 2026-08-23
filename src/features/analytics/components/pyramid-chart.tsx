@@ -8,8 +8,18 @@ import { Filter } from "lucide-react";
 interface DataPoint {
   name: string;
   value: number;
-  fill: string;
+  fill?: string;
 }
+
+const DEFAULT_COLORS = [
+  '#2563EB', // Blue
+  '#10B981', // Emerald
+  '#F59E0B', // Amber
+  '#EF4444', // Red
+  '#8B5CF6', // Violet
+  '#EC4899', // Pink
+  '#14B8A6', // Teal
+];
 
 interface PyramidChartProps {
   title: string;
@@ -48,7 +58,7 @@ export function PyramidChart({ title, description, data }: PyramidChartProps) {
                 >
                   <LabelList position="right" fill="#0F172A" stroke="none" dataKey="name" />
                   {data.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                    <Cell key={`cell-${index}`} fill={entry.fill || DEFAULT_COLORS[index % DEFAULT_COLORS.length]} />
                   ))}
                 </Funnel>
               </FunnelChart>

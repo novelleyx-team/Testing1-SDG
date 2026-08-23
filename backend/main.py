@@ -1,6 +1,9 @@
 import os
+import sys
 import uuid
-from fastapi import FastAPI, HTTPException, UploadFile, File
+import io
+import csv
+from fastapi import FastAPI, HTTPException, UploadFile, File, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import matplotlib.pyplot as plt
@@ -11,9 +14,6 @@ import subprocess
 import json
 import shutil
 
-import sys
-import os
-
 # Link to the master database folder "Superbase_db"
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if parent_dir not in sys.path:
@@ -21,11 +21,11 @@ if parent_dir not in sys.path:
 
 from Superbase_db import database as db
 
-# --- ABSOLUTE PATHING FOR LOCAL STORAGE SANDBOX (Tickets 2 & 3) ---
-# Hardcoded absolute paths for datasets and student uploads
-SANDBOX_DIR = r"d:\SDG_Local_Sandbox"
-DATASETS_DIR = r"d:\SDG_Local_Sandbox\datasets"
-STUDENT_UPLOADS_DIR = r"d:\SDG_Local_Sandbox\student_uploads"
+# --- PATHING FOR STORAGE SANDBOX (Tickets 2 & 3) ---
+# Default to relative local directory if not provided in environment
+SANDBOX_DIR = os.getenv("SANDBOX_DIR", os.path.join(os.getcwd(), "SDG_Local_Sandbox"))
+DATASETS_DIR = os.path.join(SANDBOX_DIR, "datasets")
+STUDENT_UPLOADS_DIR = os.path.join(SANDBOX_DIR, "student_uploads")
 
 # Ensure isolated local directories exist
 os.makedirs(DATASETS_DIR, exist_ok=True)
@@ -90,7 +90,7 @@ async def save_project(project: ProjectCreate):
     score = 0
     try:
         score = int(float(project.aiScore))
-    except:
+    except (ValueError, TypeError):
         pass
     project_id = db.create_project(
         project_id=project.id,

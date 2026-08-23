@@ -40,7 +40,7 @@ export default function TermsOfServicePage() {
 
             <h2 className="text-2xl font-bold text-slate-900 mt-8 mb-4">2. Zero-Mock Data Policy & Plagiarism</h2>
             <p className="mb-6 leading-relaxed">
-              Users are strictly bound by the platform's Zero-Mock Data Policy. Uploading dummy files, placeholder texts, or test resources into the production environment is a violation of these terms. Additionally, all submissions are scanned for plagiarism. Any work found to violate intellectual property rights will be immediately flagged and reported to your associated institution.
+              Users are strictly bound by the platform&apos;s Zero-Mock Data Policy. Uploading dummy files, placeholder texts, or test resources into the production environment is a violation of these terms. Additionally, all submissions are scanned for plagiarism. Any work found to violate intellectual property rights will be immediately flagged and reported to your associated institution.
             </p>
 
             <h2 className="text-2xl font-bold text-slate-900 mt-8 mb-4">3. User Responsibilities</h2>

@@ -10,8 +10,8 @@ import { useAuthStore } from "@/store/auth-store";
 
 export default function ProjectsPage() {
   const { user } = useAuthStore();
-  const getStudentProjects = useProjectsStore(state => state.getStudentProjects);
-  const projects = user ? getStudentProjects(user.id) : [];
+  const allProjects = useProjectsStore(state => state.projects);
+  const projects = user ? allProjects.filter(p => p.studentId === user.id) : [];
 
   const getStatusBadge = (status: string) => {
     switch(status) {
@@ -103,7 +103,8 @@ export default function ProjectsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {displayProjects.map((project: Record<string, unknown>) => (
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              {displayProjects.map((project: any) => (
                 <tr key={project.id} className="hover:bg-gray-50 dark:hover:bg-[#111827] transition-colors group">
                   <td className="py-4 px-6 whitespace-nowrap">
                     <span className="font-mono text-sm font-semibold text-gray-500 dark:text-gray-400">{project.id}</span>

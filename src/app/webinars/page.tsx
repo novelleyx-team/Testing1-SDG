@@ -121,7 +121,7 @@ export default function WebinarsPage() {
                   </div>
                   <div className="flex flex-col py-2 pr-4 flex-1">
                     <div className="flex gap-2 mb-3">
-                      {webinar.tags.map((tag, i) => (
+                      {webinar.tags.map((tag: string, i: number) => (
                         <span key={i} className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md ${tag === 'Live' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'}`}>
                           {tag}
                         </span>

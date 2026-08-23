@@ -8,8 +8,18 @@ import { PieChart as PieChartIcon } from "lucide-react";
 interface DataPoint {
   name: string;
   value: number;
-  color: string;
+  color?: string;
 }
+
+const DEFAULT_COLORS = [
+  '#2563EB', // Blue
+  '#10B981', // Emerald
+  '#F59E0B', // Amber
+  '#EF4444', // Red
+  '#8B5CF6', // Violet
+  '#EC4899', // Pink
+  '#14B8A6', // Teal
+];
 
 interface DonutChartProps {
   title: string;
@@ -47,7 +57,7 @@ export function DonutChart({ title, description, data }: DonutChartProps) {
                   dataKey="value"
                 >
                   {data.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                    <Cell key={`cell-${index}`} fill={entry.color || DEFAULT_COLORS[index % DEFAULT_COLORS.length]} />
                   ))}
                 </Pie>
                 <Tooltip 

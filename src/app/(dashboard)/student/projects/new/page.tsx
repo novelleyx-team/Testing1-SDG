@@ -139,7 +139,8 @@ function ProjectFormContent() {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("TPL-1");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [simulationPhase, setSimulationPhase] = useState(0);
-  const [submittedProject, setSubmittedProject] = useState<Record<string, unknown> | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [submittedProject, setSubmittedProject] = useState<any | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
 
   const notifyFaculty = true;
@@ -194,7 +195,8 @@ function ProjectFormContent() {
         plagiarismScore: plagiarismScore,
         isPlagiarized: isPlagiarized,
         marksAssigned: `${marksAssigned}/100`,
-        aiScore: "N/A"
+        aiScore: "N/A",
+        targetSdg: "N/A"
       };
       
       const facultyName = formData.get("facultyName")?.toString() || "your assigned faculty";
@@ -274,7 +276,7 @@ function ProjectFormContent() {
       showNotification(
         notifyFaculty ? "Project Submitted & Faculty Notified!" : "Project Successfully Submitted!", 
         notifyFaculty
-          ? `Your SDG Report was generated successfully. Enterprise SMS and Email dispatched to ${facultyName} immediately.`
+          ? `Your SDG Report was generated successfully. Enterprise SMS and Email dispatched to ${formData.get("facultyName")?.toString() || "your assigned faculty"} immediately.`
           : "Your project has been analyzed and the official SDG alignment report has been generated.",
         "success"
       );
@@ -375,10 +377,8 @@ function ProjectFormContent() {
                 </div>
               ) : null}
               {submittedProject.reportUrl && (
-                <Button asChild className="bg-emerald-600 hover:bg-emerald-700 flex-1 h-12 text-lg font-bold">
-                  <a href={submittedProject.reportUrl as string} download target="_blank" rel="noreferrer">
-                    <Download className="w-5 h-5 mr-2" /> Download Official PDF Report
-                  </a>
+                <Button render={<a href={submittedProject.reportUrl as string} download target="_blank" rel="noreferrer" />} className="bg-emerald-600 hover:bg-emerald-700 flex-1 h-12 text-lg font-bold">
+                  <Download className="w-5 h-5 mr-2" /> Download Official PDF Report
                 </Button>
               )}
               <Button onClick={() => setSubmittedProject(null)} variant="outline" className="flex-1 h-12 text-lg font-bold">

@@ -70,10 +70,10 @@ export default function ProjectsPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="sm" onClick={() => setSelectedProject(project)}>
-                            <Eye className="w-4 h-4 mr-2" /> View
-                          </Button>
+                        <DialogTrigger render={
+                          <Button variant="outline" size="sm" onClick={() => setSelectedProject(project)} />
+                        }>
+                          <Eye className="w-4 h-4 mr-2" /> View
                         </DialogTrigger>
                         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                           <DialogHeader>
@@ -109,10 +109,8 @@ export default function ProjectsPage() {
 
                             {project.reportUrl && (
                               <div className="flex justify-end pt-4 border-t border-gray-100">
-                                <Button asChild className="bg-blue-600 hover:bg-blue-700">
-                                  <a href={project.reportUrl} download target="_blank" rel="noreferrer">
-                                    <Download className="w-4 h-4 mr-2" /> Download Full PDF Report
-                                  </a>
+                                <Button render={<a href={project.reportUrl} download target="_blank" rel="noreferrer" />} className="bg-blue-600 hover:bg-blue-700">
+                                  <Download className="w-4 h-4 mr-2" /> Download Full PDF Report
                                 </Button>
                               </div>
                             )}

@@ -101,7 +101,7 @@ export default function DocArticlePage() {
 
             <h2 className="text-2xl font-bold text-slate-900 mt-12 mb-4">Core Concepts</h2>
             <p className="text-slate-600 mb-6 leading-relaxed">
-              To fully utilize <strong>{title}</strong>, it's critical to understand how the platform processes the underlying data. 
+              To fully utilize <strong>{title}</strong>, it&apos;s critical to understand how the platform processes the underlying data. 
               {data.isApi ? " Ensure your headers contain the correct Bearer tokens and you are pointing to the v2 endpoints." : " Our infrastructure is built on a real-time event-driven architecture, ensuring that every action you take is immediately reflected across all authorized dashboards."}
             </p>
 

@@ -49,7 +49,7 @@ export default function HelpCenterPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-4xl md:text-6xl font-black text-slate-900 tracking-tight mb-6"
           >
-            We're here to <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-orange-400">help.</span>
+            We&apos;re here to <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-orange-400">help.</span>
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
@@ -133,7 +133,7 @@ export default function HelpCenterPage() {
               </div>
               <div className="absolute bottom-6 left-8">
                 <span className="px-3 py-1 bg-rose-500 text-white text-xs font-bold rounded-full mb-3 inline-block">SYSTEM DIAGNOSTICS</span>
-                <h3 className="text-2xl font-bold text-white drop-shadow-md">How to resolve "Network Disconnected" Error Code 503</h3>
+                <h3 className="text-2xl font-bold text-white drop-shadow-md">How to resolve &quot;Network Disconnected&quot; Error Code 503</h3>
               </div>
             </div>
           </div>

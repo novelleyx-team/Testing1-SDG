@@ -32,7 +32,7 @@ export default function LeadershipDashboardPage() {
   ];
 
   // Empty list for faculty until populated
-  const departmentFaculty: Record<string, unknown>[] = [];
+  const departmentFaculty: { id: string; name: string; email: string; department: string; activeProjects: number; status: string }[] = [];
 
   return (
     <div className="flex flex-col gap-6 p-6 xl:p-8 max-w-[1600px] mx-auto w-full animate-in fade-in duration-500">
