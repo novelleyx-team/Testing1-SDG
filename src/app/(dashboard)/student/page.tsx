@@ -135,40 +135,50 @@ export default function StudentDashboard() {
         <div className="lg:col-span-2 space-y-8">
           
           {/* AI Suggestions Card */}
-          <Card className="rounded-[18px] shadow-[0_8px_30px_rgba(37,99,235,0.06)] border border-blue-100 p-8 bg-gradient-to-br from-white to-blue-50/30">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2.5 bg-blue-600 rounded-xl text-white shadow-md">
-                <Lightbulb size={20} />
+          {studentProjects.length > 0 ? (
+            <Card className="rounded-[18px] shadow-[0_8px_30px_rgba(37,99,235,0.06)] border border-blue-100 p-8 bg-gradient-to-br from-white to-blue-50/30">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2.5 bg-blue-600 rounded-xl text-white shadow-md">
+                  <Lightbulb size={20} />
+                </div>
+                <h3 className="text-[18px] font-bold text-gray-900 dark:text-gray-100">Today&apos;s AI Suggestions</h3>
               </div>
-              <h3 className="text-[18px] font-bold text-gray-900 dark:text-gray-100">Today&apos;s AI Suggestions</h3>
-            </div>
-            <div className="space-y-4">
-              <div className="flex items-start gap-4">
-                <CheckCircle2 className="text-green-500 mt-0.5 shrink-0" size={18} />
-                <p className="text-[15px] text-gray-700">Your latest abstract could better align with <strong className="text-gray-900">SDG 13 (Climate Action)</strong> by focusing on mitigation strategies.</p>
-              </div>
-              <div className="flex items-start gap-4">
-                <CheckCircle2 className="text-green-500 mt-0.5 shrink-0" size={18} />
-                <div className="text-[15px] text-gray-700">
-                  Add these high-impact keywords to your submission:
-                  <div className="flex gap-2 mt-3">
-                    <span className="px-3 py-1 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-gray-600 shadow-sm">Renewable Energy</span>
-                    <span className="px-3 py-1 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-gray-600 shadow-sm">Carbon Emission</span>
-                    <span className="px-3 py-1 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-gray-600 shadow-sm">Sustainability</span>
+              <div className="space-y-4">
+                <div className="flex items-start gap-4">
+                  <CheckCircle2 className="text-green-500 mt-0.5 shrink-0" size={18} />
+                  <p className="text-[15px] text-gray-700">Your latest abstract could better align with <strong className="text-gray-900">SDG 13 (Climate Action)</strong> by focusing on mitigation strategies.</p>
+                </div>
+                <div className="flex items-start gap-4">
+                  <CheckCircle2 className="text-green-500 mt-0.5 shrink-0" size={18} />
+                  <div className="text-[15px] text-gray-700">
+                    Add these high-impact keywords to your submission:
+                    <div className="flex gap-2 mt-3">
+                      <span className="px-3 py-1 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-gray-600 shadow-sm">Renewable Energy</span>
+                      <span className="px-3 py-1 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-gray-600 shadow-sm">Carbon Emission</span>
+                      <span className="px-3 py-1 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-gray-600 shadow-sm">Sustainability</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-            <div className="mt-8 pt-6 border-t border-blue-100/60 flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Estimated Score Improvement</p>
-                <p className="text-2xl font-black text-green-600 mt-1">+0.7 pts</p>
+              <div className="mt-8 pt-6 border-t border-blue-100/60 flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">Estimated Score Improvement</p>
+                  <p className="text-2xl font-black text-green-600 mt-1">+0.7 pts</p>
+                </div>
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-6 py-6 font-semibold shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] transition-all hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:-translate-y-0.5 group">
+                  Improve Project <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                </Button>
               </div>
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-6 py-6 font-semibold shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] transition-all hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:-translate-y-0.5 group">
-                Improve Project <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </div>
-          </Card>
+            </Card>
+          ) : (
+            <Card className="rounded-[18px] shadow-[0_8px_30px_rgba(37,99,235,0.06)] border border-blue-100 p-8 bg-gradient-to-br from-white to-blue-50/30 text-center">
+              <div className="p-4 bg-blue-100/50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                <Brain className="text-blue-600" size={32} />
+              </div>
+              <h3 className="text-[18px] font-bold text-gray-900 dark:text-gray-100 mb-2">No AI Suggestions Yet</h3>
+              <p className="text-gray-500">Submit your first project to receive personalized AI recommendations and score improvements.</p>
+            </Card>
+          )}
 
           {/* Recent Projects */}
           <Card className="rounded-[18px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] border-none p-0 overflow-hidden">

@@ -39,7 +39,7 @@ const registerSchema = z.object({
   role: z.enum([Role.STUDENT, Role.FACULTY, Role.HOD, Role.DEAN], { message: "Please select a valid role to register." }),
   department: z.string().optional(),
   branch: z.string().optional(),
-  phoneNumber: z.string().optional(),
+  phoneNumber: z.string().min(10, { message: "Phone number is required (at least 10 digits)." }),
   githubUrl: z.string().optional(),
   confirmPassword: z.string()
 }).superRefine((data, ctx) => {
@@ -62,6 +62,13 @@ const registerSchema = z.object({
       code: z.ZodIssueCode.custom,
       message: "Branch is required for Students.",
       path: ["branch"],
+    });
+  }
+  if (data.role === Role.STUDENT && (!data.githubUrl || data.githubUrl.trim().length === 0)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "GitHub ID or URL is required for Students.",
+      path: ["githubUrl"],
     });
   }
 
@@ -246,7 +253,7 @@ function LoginForm() {
   );
 }
 
-function RegisterForm() {
+function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -303,13 +310,8 @@ function RegisterForm() {
       });
       setIsLoading(false);
 
-      const routes: Record<string, string> = {
-        [Role.STUDENT]: "/student",
-        [Role.FACULTY]: "/faculty",
-        [Role.HOD]: "/leadership",
-        [Role.DEAN]: "/leadership",
-      };
-      router.push(routes[data.role] || "/student");
+      // Call onSuccess to switch to login tab instead of auto-logging in
+      onSuccess();
     }, 0);
   };
 
@@ -569,7 +571,7 @@ function AuthContent() {
       </div>
 
       <div className="mt-6">
-        {mode === "login" ? <LoginForm /> : <RegisterForm />}
+        {mode === "login" ? <LoginForm /> : <RegisterForm onSuccess={() => setMode("login")} />}
       </div>
     </div>
   );

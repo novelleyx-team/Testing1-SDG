@@ -23,38 +23,7 @@ export default function ProjectsPage() {
     }
   };
 
-  const displayProjects = projects.length === 0 ? [
-    {
-      id: "PRJ-3042",
-      title: "Clean Water Filtration System",
-      abstract: "A low-cost water filtration system using local materials for rural areas.",
-      targetSdg: "SDG 6",
-      date: "Jul 10, 2026",
-      aiScore: "92/100",
-      status: "Approved",
-      hasPdf: true
-    },
-    {
-      id: "PRJ-8193",
-      title: "Campus Solar Grid Extension",
-      abstract: "Proposal to add 50kW solar capacity to the engineering block roof.",
-      targetSdg: "SDG 7",
-      date: "Jul 15, 2026",
-      aiScore: "85/100",
-      status: "Pending",
-      hasPdf: true
-    },
-    {
-      id: "PRJ-4421",
-      title: "Smart Waste Sorting Bin",
-      abstract: "AI-powered waste bin that automatically sorts recyclables from trash.",
-      targetSdg: "SDG 12",
-      date: "Jul 18, 2026",
-      aiScore: "78/100",
-      status: "Revision",
-      hasPdf: true
-    }
-  ] : projects;
+  const displayProjects = projects;
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-20 animate-in fade-in duration-0">
