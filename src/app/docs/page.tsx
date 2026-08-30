@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { motion } from "motion/react"
-import { BookOpen, Search, FileText, ChevronRight, Server, Shield, Activity, Zap } from "lucide-react"
+import { BookOpen, Search, FileText, ChevronRight, Server, Shield, Zap } from "lucide-react"
 import { BackButton } from "@/components/BackButton"
 import Link from "next/link"
 

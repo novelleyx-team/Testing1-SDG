@@ -21,10 +21,10 @@ export function LineChart({ title, description, data, color = "#2563EB" }: LineC
   const hasData = data && data.length > 0;
 
   return (
-    <Card className="rounded-xl shadow-sm border border-slate-200">
+    <Card className="rounded-xl shadow-sm border border-slate-200 dark:border-gray-800 bg-white dark:bg-[#1F2937]">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold text-slate-800">{title}</CardTitle>
-        {description && <CardDescription className="text-sm text-slate-500">{description}</CardDescription>}
+        <CardTitle className="text-lg font-semibold text-slate-800 dark:text-gray-100">{title}</CardTitle>
+        {description && <CardDescription className="text-sm text-slate-500 dark:text-gray-400">{description}</CardDescription>}
       </CardHeader>
       <CardContent>
         <div className="h-[300px] w-full mt-4">

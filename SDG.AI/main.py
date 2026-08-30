@@ -9,6 +9,14 @@ from modules.nlp_engine import extract_knowledge
 from modules.vector_store import vector_store
 from modules.generator import generator
 
+from modules.schemas import ProjectDetails
+from modules.sdg_reasoning import (
+    analyze_and_map_sdgs,
+    generate_impact_score,
+    generate_recommendations,
+    generate_full_report
+)
+
 app = FastAPI(title="SDG.AI Engine", description="Internal Knowledge Intelligence Engine for NOVELLEYX")
 
 class DocumentProcessRequest(BaseModel):
@@ -41,7 +49,7 @@ def process_document_pipeline(project_id: str, file_path: str):
         print(f"[SDG.AI] Pipeline finished for {project_id} without vectors (models not loaded).")
         
     # Save a local metadata manifest for the project
-    manifest_dir = r"d:\SDG_Local_Sandbox\sdg_ai_manifests"
+    manifest_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "SDG_Local_Sandbox", "sdg_ai_manifests")
     os.makedirs(manifest_dir, exist_ok=True)
     manifest_path = os.path.join(manifest_dir, f"{project_id}_manifest.json")
     
@@ -92,6 +100,55 @@ async def ask_ai(request: AskRequest):
         "answer": answer,
         "sources": [c["project_id"] for c in context]
     }
+
+# --- NEW SDG REASONING API ENDPOINTS ---
+
+@app.post("/api/sdg/analyze")
+async def sdg_analyze(project: ProjectDetails):
+    """Parses project details and returns initial summary and mapped SDGs."""
+    try:
+        result = analyze_and_map_sdgs(project)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/sdg/score")
+async def sdg_score(project: ProjectDetails):
+    """Evaluates the project across multiple dimensions and returns a structured score."""
+    try:
+        analysis = analyze_and_map_sdgs(project)
+        impact = generate_impact_score(project, analysis)
+        return impact
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/sdg/recommend")
+async def sdg_recommend(project: ProjectDetails):
+    """Generates actionable improvements and KPIs."""
+    try:
+        analysis = analyze_and_map_sdgs(project)
+        recs = generate_recommendations(project, analysis)
+        return recs
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/sdg/report")
+async def sdg_report(project: ProjectDetails):
+    """Aggregates all analyses into a comprehensive structured JSON report."""
+    try:
+        analysis = analyze_and_map_sdgs(project)
+        impact = generate_impact_score(project, analysis)
+        recs = generate_recommendations(project, analysis)
+        report = generate_full_report(project, analysis, impact, recs)
+        
+        return {
+            "analysis": analysis,
+            "impact": impact,
+            "recommendations": recs,
+            "report": report
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8001, reload=True)

@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { motion } from "motion/react"
-import { BookOpen, FlaskConical, GraduationCap, Building2, Leaf, LineChart, FileText, Settings } from "lucide-react"
+import { BookOpen, FlaskConical, GraduationCap, Building2, Leaf, FileText } from "lucide-react"
 import { BackButton } from "@/components/BackButton"
 
 const modules = [

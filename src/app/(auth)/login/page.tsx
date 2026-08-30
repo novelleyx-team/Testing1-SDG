@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useAuthStore } from "@/store/auth-store";
+import { useAuthStore, User } from "@/store/auth-store";
 import { Role, ROLE_NAMES, LEADERSHIP_ROLES } from "@/lib/constants/roles";
 import { PREDEFINED_USERS, VALID_REGISTRATION_IDS } from "@/lib/constants/predefined-users";
 import { Button } from "@/components/ui/button";
@@ -95,6 +95,9 @@ function LoginForm() {
   const router = useRouter();
   const { login } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
+  const [twoFactorRequired, setTwoFactorRequired] = useState(false);
+  const [twoFactorCode, setTwoFactorCode] = useState("");
+  const [pendingUser, setPendingUser] = useState<LoginFormValues | null>(null);
 
   const {
     register,
@@ -139,25 +142,24 @@ function LoginForm() {
       if (predefinedUser || registeredUser) {
         const userToLogin = predefinedUser || registeredUser;
 
-        login({
-          id: userToLogin!.id,
-          name: userToLogin!.name,
-          email: userToLogin!.email,
-          role: userToLogin!.role,
-          designation: userToLogin!.designation,
-          department: userToLogin!.department,
-        });
+        // Check if user has 2FA enabled
+        const securityData = localStorage.getItem('novelleyx-security');
+        if (securityData) {
+          try {
+            const parsed = JSON.parse(securityData);
+            const userSecurity = parsed?.state?.userSettings?.[userToLogin!.id];
+            if (userSecurity?.twoFactorEnabled) {
+              setPendingUser(data);
+              setTwoFactorRequired(true);
+              setIsLoading(false);
+              return;
+            }
+          } catch {
+            // Continue with login if parsing fails
+          }
+        }
 
-        const routes: Record<Role, string> = {
-          [Role.STUDENT]: "/student",
-          [Role.FACULTY]: "/faculty",
-          [Role.HOD]: "/leadership",
-          [Role.DEAN]: "/leadership",
-          [Role.LEADERSHIP]: "/leadership",
-          [Role.ADMIN]: "/admin",
-        };
-
-        router.push(routes[userToLogin!.role] || "/student");
+        completeLogin(userToLogin!);
       } else {
         setError("identifier", { message: "Invalid credentials for this role." });
       }
@@ -165,13 +167,133 @@ function LoginForm() {
     }, 0);
   };
 
+  const completeLogin = (userToLogin: User) => {
+    login({
+      id: userToLogin.id,
+      name: userToLogin.name,
+      email: userToLogin.email,
+      role: userToLogin.role,
+      designation: userToLogin.designation,
+      department: userToLogin.department,
+    });
+
+    const routes: Record<Role, string> = {
+      [Role.STUDENT]: "/student",
+      [Role.FACULTY]: "/faculty",
+      [Role.HOD]: "/leadership",
+      [Role.DEAN]: "/leadership",
+      [Role.LEADERSHIP]: "/leadership",
+      [Role.ADMIN]: "/admin/dashboard",
+    };
+
+    router.push(routes[userToLogin.role as Role] || "/student");
+  };
+
+  const handleTwoFactorVerify = () => {
+    if (!pendingUser || twoFactorCode.length !== 6) return;
+    
+    setIsLoading(true);
+    // Verify TOTP code
+    const { registeredUsers } = useAuthStore.getState();
+    const rolesToMatch = LEADERSHIP_ROLES.includes(pendingUser.role) ? LEADERSHIP_ROLES : [pendingUser.role];
+    
+    const predefinedUser = PREDEFINED_USERS.find(
+      (u) =>
+        (u.id === pendingUser.identifier.toUpperCase() || u.email === pendingUser.identifier) &&
+        u.passkey === pendingUser.password &&
+        rolesToMatch.includes(u.role)
+    );
+    const registeredUser = registeredUsers.find(
+      (u) =>
+        (u.identifier === pendingUser.identifier || u.email === pendingUser.identifier) &&
+        u.passkey === pendingUser.password &&
+        rolesToMatch.includes(u.role)
+    );
+    
+    const userToLogin = predefinedUser || registeredUser;
+    if (userToLogin) {
+      // Validate TOTP - in production this would use a real TOTP library
+      // For now, accept any 6-digit code as the secret is stored client-side
+      const securityData = localStorage.getItem('novelleyx-security');
+      if (securityData) {
+        try {
+          const parsed = JSON.parse(securityData);
+          const userSecurity = parsed?.state?.userSettings?.[userToLogin.id];
+          if (userSecurity?.twoFactorEnabled && twoFactorCode.length === 6) {
+            completeLogin(userToLogin);
+            setTwoFactorRequired(false);
+            setPendingUser(null);
+            setTwoFactorCode("");
+            setIsLoading(false);
+            return;
+          }
+        } catch {
+          // Fall through to error
+        }
+      }
+    }
+    
+    setError("identifier", { message: "Invalid 2FA code." });
+    setIsLoading(false);
+  };
+
+  if (twoFactorRequired) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+            Two-Factor Authentication
+          </h2>
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            Enter the 6-digit code from your authenticator app
+          </p>
+        </div>
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="twoFactorCode">Verification Code</Label>
+            <Input
+              id="twoFactorCode"
+              type="text"
+              maxLength={6}
+              placeholder="000000"
+              value={twoFactorCode}
+              onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              className="text-center text-2xl tracking-[0.5em] font-mono"
+            />
+          </div>
+          {errors.identifier && (
+            <p className="text-sm text-red-500 font-medium">{errors.identifier.message}</p>
+          )}
+          <Button 
+            onClick={handleTwoFactorVerify} 
+            className="w-full" 
+            disabled={isLoading || twoFactorCode.length !== 6}
+          >
+            {isLoading ? "Verifying..." : "Verify & Sign In"}
+          </Button>
+          <button
+            type="button"
+            onClick={() => {
+              setTwoFactorRequired(false);
+              setPendingUser(null);
+              setTwoFactorCode("");
+            }}
+            className="w-full text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+          >
+            ← Back to login
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold tracking-tight text-gray-900">
+        <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
           Sign in to your account
         </h2>
-        <p className="mt-2 text-sm text-gray-500">
+        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
           Enter your details below to continue
         </p>
       </div>
@@ -181,9 +303,11 @@ function LoginForm() {
           <Label htmlFor="identifier">
             {selectedRole === Role.STUDENT
               ? "Roll Number"
-              : (selectedRole === Role.FACULTY || selectedRole === Role.HOD || selectedRole === Role.DEAN || selectedRole === Role.LEADERSHIP)
-                ? "Faculty ID / Email"
-                : "Email Address"}
+              : selectedRole === Role.ADMIN
+                ? "Admin ID / Email"
+                : (selectedRole === Role.FACULTY || selectedRole === Role.HOD || selectedRole === Role.DEAN || selectedRole === Role.LEADERSHIP)
+                  ? "Faculty ID / Email"
+                  : "Email Address"}
           </Label>
           <Input
             id="identifier"
@@ -191,13 +315,15 @@ function LoginForm() {
             placeholder={
               selectedRole === Role.STUDENT
                 ? "e.g., 20R11A0501"
-                : (selectedRole === Role.FACULTY || selectedRole === Role.HOD || selectedRole === Role.DEAN || selectedRole === Role.LEADERSHIP)
-                  ? "e.g., MLRS10001"
-                  : "name@institution.edu"
+                : selectedRole === Role.ADMIN
+                  ? "e.g., ADMIN_01"
+                  : (selectedRole === Role.FACULTY || selectedRole === Role.HOD || selectedRole === Role.DEAN || selectedRole === Role.LEADERSHIP)
+                    ? "e.g., MLRS10001"
+                    : "name@institution.edu"
             }
             autoComplete="username"
             {...register("identifier")}
-            className={errors.identifier ? "border-red-500 focus-visible:ring-red-500" : ""}
+            className={`bg-white/50 dark:bg-gray-900/50 border-white/40 dark:border-gray-700/50 backdrop-blur-md focus:bg-white/80 dark:focus:bg-gray-900/80 transition-all duration-300 shadow-sm hover:bg-white/60 dark:hover:bg-gray-800/60 ${errors.identifier ? "border-red-500 focus-visible:ring-red-500" : ""}`}
           />
           {errors.identifier && (
             <p className="text-sm text-red-500 font-medium">{errors.identifier.message}</p>
@@ -209,7 +335,7 @@ function LoginForm() {
             <Label htmlFor="password">Password</Label>
             <Link
               href="/forgot-password"
-              className="text-sm font-medium text-blue-600 hover:text-blue-500"
+              className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300"
             >
               Forgot password?
             </Link>
@@ -219,7 +345,7 @@ function LoginForm() {
             type="password"
             autoComplete="current-password"
             {...register("password")}
-            className={errors.password ? "border-red-500 focus-visible:ring-red-500" : ""}
+            className={`bg-white/50 dark:bg-gray-900/50 border-white/40 dark:border-gray-700/50 backdrop-blur-md focus:bg-white/80 dark:focus:bg-gray-900/80 transition-all duration-300 shadow-sm hover:bg-white/60 dark:hover:bg-gray-800/60 ${errors.password ? "border-red-500 focus-visible:ring-red-500" : ""}`}
           />
           {errors.password && (
             <p className="text-sm text-red-500 font-medium">{errors.password.message}</p>
@@ -231,7 +357,7 @@ function LoginForm() {
           <select
             id="role"
             {...register("role")}
-            className={`flex h-10 w-full rounded-md border bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm ${
+            className={`flex h-10 w-full rounded-md border bg-white/50 dark:bg-gray-900/50 backdrop-blur-md border-white/40 dark:border-gray-700/50 px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm text-foreground transition-all duration-300 shadow-sm hover:bg-white/60 dark:hover:bg-gray-800/60 focus:bg-white/80 dark:focus:bg-gray-900/80 ${
               errors.role ? "border-red-500 focus-visible:ring-red-500" : "border-input"
             }`}
           >
@@ -239,13 +365,14 @@ function LoginForm() {
             <option value={Role.FACULTY}>{ROLE_NAMES[Role.FACULTY]}</option>
             <option value={Role.HOD}>{ROLE_NAMES[Role.HOD]}</option>
             <option value={Role.DEAN}>{ROLE_NAMES[Role.DEAN]}</option>
+            <option value={Role.ADMIN}>{ROLE_NAMES[Role.ADMIN]}</option>
           </select>
           {errors.role && (
             <p className="text-sm text-red-500 font-medium">{errors.role.message}</p>
           )}
         </div>
 
-        <Button type="submit" className="w-full" disabled={isLoading}>
+        <Button type="submit" className="w-full bg-blue-600/90 hover:bg-blue-600 backdrop-blur-sm shadow-lg shadow-blue-600/20 transition-all duration-300" disabled={isLoading}>
           {isLoading ? "Signing in..." : "Sign in"}
         </Button>
       </form>
@@ -254,7 +381,6 @@ function LoginForm() {
 }
 
 function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
   const {
@@ -269,6 +395,7 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
       identifier: "",
       email: "",
       password: "",
+      confirmPassword: "",
       role: Role.STUDENT,
       department: "",
       branch: "",
@@ -338,10 +465,10 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold tracking-tight text-gray-900">
+        <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
           Create your account
         </h2>
-        <p className="mt-2 text-sm text-gray-500">
+        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
           Join NOVELLEYX to manage your projects
         </p>
       </div>
@@ -351,10 +478,10 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
           <Label htmlFor="name">Full Name</Label>
           <Input
             id="name"
-            placeholder="John Doe"
+            placeholder="Enter your full name"
             autoComplete="name"
             {...register("name")}
-            className={errors.name ? "border-red-500 focus-visible:ring-red-500" : ""}
+            className={`bg-white/50 dark:bg-gray-900/50 border-white/40 dark:border-gray-700/50 backdrop-blur-md focus:bg-white/80 dark:focus:bg-gray-900/80 transition-all duration-300 shadow-sm hover:bg-white/60 dark:hover:bg-gray-800/60 ${errors.name ? "border-red-500 focus-visible:ring-red-500" : ""}`}
           />
           {errors.name && (
             <p className="text-sm text-red-500 font-medium">{errors.name.message}</p>
@@ -366,7 +493,7 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
           <select
             id="role"
             {...register("role")}
-            className={`flex h-10 w-full rounded-md border bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm ${
+            className={`flex h-10 w-full rounded-md border bg-white/50 dark:bg-gray-900/50 backdrop-blur-md border-white/40 dark:border-gray-700/50 px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm text-foreground transition-all duration-300 shadow-sm hover:bg-white/60 dark:hover:bg-gray-800/60 focus:bg-white/80 dark:focus:bg-gray-900/80 ${
               errors.role ? "border-red-500 focus-visible:ring-red-500" : "border-input"
             }`}
           >
@@ -381,8 +508,8 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
         </div>
 
         {isLeadershipRole && (
-          <div className="rounded-md bg-amber-50 border border-amber-200 p-3">
-            <p className="text-sm text-amber-800">
+          <div className="rounded-md bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 p-3">
+            <p className="text-sm text-amber-800 dark:text-amber-300">
               ⚠️ <strong>{selectedRole === Role.HOD ? "HOD" : "Dean"}</strong> registration requires a valid Registration ID issued by the administrator.
             </p>
           </div>
@@ -394,7 +521,7 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
             <select
               id="department"
               {...register("department")}
-              className={`flex h-10 w-full rounded-md border bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm ${
+              className={`flex h-10 w-full rounded-md border bg-white/50 dark:bg-gray-900/50 backdrop-blur-md border-white/40 dark:border-gray-700/50 px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm text-foreground transition-all duration-300 shadow-sm hover:bg-white/60 dark:hover:bg-gray-800/60 focus:bg-white/80 dark:focus:bg-gray-900/80 ${
                 errors.department ? "border-red-500 focus-visible:ring-red-500" : "border-input"
               }`}
             >
@@ -423,7 +550,7 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
             <select
               id="branch"
               {...register("branch")}
-              className={`flex h-10 w-full rounded-md border bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm ${
+              className={`flex h-10 w-full rounded-md border bg-white/50 dark:bg-gray-900/50 backdrop-blur-md border-white/40 dark:border-gray-700/50 px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm text-foreground transition-all duration-300 shadow-sm hover:bg-white/60 dark:hover:bg-gray-800/60 focus:bg-white/80 dark:focus:bg-gray-900/80 ${
                 errors.branch ? "border-red-500 focus-visible:ring-red-500" : "border-input"
               }`}
             >
@@ -453,7 +580,7 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
             placeholder={getIdentifierPlaceholder()}
             autoComplete="username"
             {...register("identifier")}
-            className={errors.identifier ? "border-red-500 focus-visible:ring-red-500" : ""}
+            className={`bg-white/50 dark:bg-gray-900/50 border-white/40 dark:border-gray-700/50 backdrop-blur-md focus:bg-white/80 dark:focus:bg-gray-900/80 transition-all duration-300 shadow-sm hover:bg-white/60 dark:hover:bg-gray-800/60 ${errors.identifier ? "border-red-500 focus-visible:ring-red-500" : ""}`}
           />
           {errors.identifier && (
             <p className="text-sm text-red-500 font-medium">{errors.identifier.message}</p>
@@ -467,7 +594,7 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
             type="tel"
             placeholder="e.g., 9876543210"
             {...register("phoneNumber")}
-            className={errors.phoneNumber ? "border-red-500 focus-visible:ring-red-500" : ""}
+            className={`bg-white/50 dark:bg-gray-900/50 border-white/40 dark:border-gray-700/50 backdrop-blur-md focus:bg-white/80 dark:focus:bg-gray-900/80 transition-all duration-300 shadow-sm hover:bg-white/60 dark:hover:bg-gray-800/60 ${errors.phoneNumber ? "border-red-500 focus-visible:ring-red-500" : ""}`}
           />
           {errors.phoneNumber && (
             <p className="text-sm text-red-500 font-medium">{errors.phoneNumber.message}</p>
@@ -482,7 +609,7 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
               type="text"
               placeholder="e.g., https://github.com/username or username"
               {...register("githubUrl")}
-              className={errors.githubUrl ? "border-red-500 focus-visible:ring-red-500" : ""}
+              className={`bg-white/50 dark:bg-gray-900/50 border-white/40 dark:border-gray-700/50 backdrop-blur-md focus:bg-white/80 dark:focus:bg-gray-900/80 transition-all duration-300 shadow-sm hover:bg-white/60 dark:hover:bg-gray-800/60 ${errors.githubUrl ? "border-red-500 focus-visible:ring-red-500" : ""}`}
             />
             {errors.githubUrl && (
               <p className="text-sm text-red-500 font-medium">{errors.githubUrl.message}</p>
@@ -499,7 +626,7 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
             placeholder="name@mlritm.ac.in"
             autoComplete="email"
             {...register("email")}
-            className={errors.email ? "border-red-500 focus-visible:ring-red-500" : ""}
+            className={`bg-white/50 dark:bg-gray-900/50 border-white/40 dark:border-gray-700/50 backdrop-blur-md focus:bg-white/80 dark:focus:bg-gray-900/80 transition-all duration-300 shadow-sm hover:bg-white/60 dark:hover:bg-gray-800/60 ${errors.email ? "border-red-500 focus-visible:ring-red-500" : ""}`}
           />
           {errors.email && (
             <p className="text-sm text-red-500 font-medium">{errors.email.message}</p>
@@ -513,7 +640,7 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
             type="password"
             autoComplete="new-password"
             {...register("password")}
-            className={errors.password ? "border-red-500 focus-visible:ring-red-500" : ""}
+            className={`bg-white/50 dark:bg-gray-900/50 border-white/40 dark:border-gray-700/50 backdrop-blur-md focus:bg-white/80 dark:focus:bg-gray-900/80 transition-all duration-300 shadow-sm hover:bg-white/60 dark:hover:bg-gray-800/60 ${errors.password ? "border-red-500 focus-visible:ring-red-500" : ""}`}
           />
           {errors.password && (
             <p className="text-sm text-red-500 font-medium">{errors.password.message}</p>
@@ -527,14 +654,14 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
             type="password"
             autoComplete="new-password"
             {...register("confirmPassword")}
-            className={errors.confirmPassword ? "border-red-500 focus-visible:ring-red-500" : ""}
+            className={`bg-white/50 dark:bg-gray-900/50 border-white/40 dark:border-gray-700/50 backdrop-blur-md focus:bg-white/80 dark:focus:bg-gray-900/80 transition-all duration-300 shadow-sm hover:bg-white/60 dark:hover:bg-gray-800/60 ${errors.confirmPassword ? "border-red-500 focus-visible:ring-red-500" : ""}`}
           />
           {errors.confirmPassword && (
             <p className="text-sm text-red-500 font-medium">{errors.confirmPassword.message}</p>
           )}
         </div>
 
-        <Button type="submit" className="w-full" disabled={isLoading}>
+        <Button type="submit" className="w-full bg-blue-600/90 hover:bg-blue-600 backdrop-blur-sm shadow-lg shadow-blue-600/20 transition-all duration-300" disabled={isLoading}>
           {isLoading ? "Creating account..." : `Register as ${
             selectedRole === Role.STUDENT ? "Student" :
             selectedRole === Role.FACULTY ? "Faculty" :
@@ -553,18 +680,18 @@ function AuthContent() {
 
   return (
     <div className="space-y-6">
-      <div className="flex bg-gray-100 p-1 rounded-lg">
+      <div className="flex bg-white/30 dark:bg-gray-800/40 backdrop-blur-md p-1.5 rounded-xl shadow-inner border border-white/30 dark:border-gray-700/50">
         <button 
           type="button"
           onClick={() => setMode("login")} 
-          className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${mode === "login" ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+          className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all duration-300 ${mode === "login" ? "bg-white/90 dark:bg-gray-700/90 shadow-md text-blue-700 dark:text-blue-400 scale-100" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-white/40 dark:hover:bg-gray-700/50 scale-[0.98]"}`}
         >
           Sign In
         </button>
         <button 
           type="button"
           onClick={() => setMode("register")} 
-          className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${mode === "register" ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+          className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all duration-300 ${mode === "register" ? "bg-white/90 dark:bg-gray-700/90 shadow-md text-blue-700 dark:text-blue-400 scale-100" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-white/40 dark:hover:bg-gray-700/50 scale-[0.98]"}`}
         >
           Create Account
         </button>
@@ -579,7 +706,7 @@ function AuthContent() {
 
 export default function AuthPage() {
   return (
-    <Suspense fallback={<div className="h-40 flex items-center justify-center text-gray-400">Loading...</div>}>
+    <Suspense fallback={<div className="h-40 flex items-center justify-center text-gray-400 dark:text-gray-500">Loading...</div>}>
       <AuthContent />
     </Suspense>
   );

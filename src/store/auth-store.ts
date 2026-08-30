@@ -24,6 +24,7 @@ interface AuthState {
   logout: () => void;
   registerUser: (user: User) => Promise<void>;
   updateProfileImage: (imageUrl: string) => void;
+  deleteProfileImage: () => void;
   updateProfile: (updates: Partial<User>) => void;
 }
 
@@ -53,9 +54,9 @@ export const useAuthStore = create<AuthState>()(
             set({ user: fullUser });
           } else {
             console.error("Login failed");
-            set({ user: userCreds }); // Fallback for demo purposes if backend isn't running
+            set({ user: userCreds }); // Fallback if backend isn't running
           }
-        } catch (e) {
+        } catch {
           set({ user: userCreds });
         }
       },
@@ -85,6 +86,11 @@ export const useAuthStore = create<AuthState>()(
       updateProfileImage: (imageUrl) => {
         set((state) => ({
           user: state.user ? { ...state.user, profileImage: imageUrl } : null,
+        }));
+      },
+      deleteProfileImage: () => {
+        set((state) => ({
+          user: state.user ? { ...state.user, profileImage: undefined } : null,
         }));
       },
       updateProfile: (updates) => {

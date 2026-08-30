@@ -278,14 +278,4 @@ export const PREDEFINED_USERS: PredefinedUser[] = [
     department: "MBA",
     passkey: "F@mJzNxV",
   },
-  // Demo Faculty Account
-  {
-    id: "FACULTY_DEMO_01",
-    name: "DR. ALICE SMITH",
-    role: Role.FACULTY,
-    email: "faculty.demo@mlritm.ac.in",
-    designation: "Assistant Professor",
-    department: "Computer Science",
-    passkey: "Faculty@123",
-  },
 ];

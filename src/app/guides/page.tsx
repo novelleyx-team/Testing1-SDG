@@ -4,6 +4,7 @@ import * as React from "react"
 import { motion } from "motion/react"
 import { Compass, CheckCircle2, Play, LayoutTemplate, FileSearch, Send, Sparkles } from "lucide-react"
 import { BackButton } from "@/components/BackButton"
+import Image from "next/image"
 
 const steps = [
   {
@@ -77,9 +78,11 @@ export default function GuidesPage() {
           className="max-w-4xl mx-auto mb-20 relative group rounded-3xl overflow-hidden shadow-2xl border border-slate-200 bg-white"
         >
           <div className="aspect-[16/9] relative bg-slate-900">
-            <img 
+            <Image 
               src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1600&q=80" 
               alt="Dashboard Tutorial" 
+              width={1600}
+              height={900}
               className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700"
             />
             <div className="absolute inset-0 flex items-center justify-center">

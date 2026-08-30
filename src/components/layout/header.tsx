@@ -1,15 +1,19 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Search, Bell, User, Plus, LogOut, ChevronDown, UserCircle, Settings } from "lucide-react";
+import { Search, Bell, User, Plus, LogOut, ChevronDown, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useAuthStore } from "@/store/auth-store";
+import { useNotificationPanelStore } from "@/store/notification-panel-store";
 
 export function Header() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { user, logout } = useAuthStore();
+  const { getUnreadCount } = useNotificationPanelStore();
   const profileRef = useRef<HTMLDivElement>(null);
+  
+  const unreadCount = user ? getUnreadCount(user.id) : 0;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -56,7 +60,11 @@ export function Header() {
             <Link href={`/${rolePrefix}/notifications`}>
               <button className="relative p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
                 <Bell className="h-5 w-5" />
-                <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 border-2 border-white dark:border-[#111827]"></span>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white border-2 border-white dark:border-[#111827]">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
               </button>
             </Link>
           );

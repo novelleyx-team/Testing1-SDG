@@ -8,16 +8,7 @@ import { DonutChart } from "@/features/analytics/components/donut-chart";
 import { Target } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-function getSeededRandom(seed: string) {
-  let h = 0;
-  for(let i = 0; i < seed.length; i++) 
-    h = Math.imul(31, h) + seed.charCodeAt(i) | 0;
-  return function() {
-    h = Math.imul(h ^ h >>> 16, 2246822507);
-    h = Math.imul(h ^ h >>> 13, 3266489909);
-    return ((h ^= h >>> 16) >>> 0) / 4294967296;
-  };
-}
+
 
 export default function LeadershipSDGTrackingPage() {
   const { user } = useAuthStore();
@@ -28,7 +19,7 @@ export default function LeadershipSDGTrackingPage() {
   }, []);
 
   const userScope = user?.department || user?.designation || "College";
-  const isDean = user?.designation?.includes("Dean") || user?.designation?.includes("Coordinator") || user?.designation?.includes("Head");
+
 
   const { sdgSkillAdoption, sdgGrowth, skillCategorySplit } = useMemo(() => {
     return {

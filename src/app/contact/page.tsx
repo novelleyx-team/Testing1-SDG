@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { Globe2, Mail, MapPin, Phone, Send, Search } from "lucide-react"
+import { Globe2, Mail, Phone, Send, Search } from "lucide-react"
 
 const directoryData = [
   { sNo: 1, name: "Dr. P Sridhar", designation: "Director", email: "director@mlritm.ac.in", phone: "040-29556182" },

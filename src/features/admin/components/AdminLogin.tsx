@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth-store";
 import { Role } from "@/lib/constants/roles";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -47,11 +47,11 @@ export function AdminLogin() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4 bg-slate-50">
-      <Card className="w-full max-w-md bg-white border-slate-200 text-slate-900 shadow-xl">
+    <div className="flex min-h-screen items-center justify-center p-4 bg-slate-50 dark:bg-[#0B1120]">
+      <Card className="w-full max-w-md bg-white dark:bg-[#1F2937] border-slate-200 dark:border-gray-800 text-slate-900 dark:text-gray-100 shadow-xl">
         <CardHeader>
-          <CardTitle className="text-3xl font-bold tracking-tight text-center">Admin Portal</CardTitle>
-          <CardDescription className="text-slate-500 text-center">
+          <CardTitle className="text-3xl font-bold tracking-tight text-center text-slate-900 dark:text-gray-100">Admin Portal</CardTitle>
+          <CardDescription className="text-slate-500 dark:text-gray-400 text-center">
             {step === 1 ? "Secure Login Area" : "2-Step Verification"}
           </CardDescription>
         </CardHeader>
@@ -68,24 +68,24 @@ export function AdminLogin() {
                 className="space-y-4"
               >
                 <div className="space-y-2">
-                  <Label htmlFor="adminId" className="text-slate-700">Admin ID</Label>
+                  <Label htmlFor="adminId" className="text-slate-700 dark:text-gray-300">Admin ID</Label>
                   <Input
                     id="adminId"
                     value={adminId}
                     onChange={(e) => setAdminId(e.target.value)}
-                    className="bg-white border-slate-300 text-slate-900 focus-visible:ring-purple-500 placeholder:text-slate-400"
+                    className="bg-white dark:bg-gray-900 border-slate-300 dark:border-gray-700 text-slate-900 dark:text-gray-100 focus-visible:ring-purple-500 placeholder:text-slate-400 dark:placeholder:text-gray-500"
                     placeholder="Enter Admin ID"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-slate-700">Password</Label>
+                  <Label htmlFor="password" className="text-slate-700 dark:text-gray-300">Password</Label>
                   <Input
                     id="password"
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="bg-white border-slate-300 text-slate-900 focus-visible:ring-purple-500 placeholder:text-slate-400"
+                    className="bg-white dark:bg-gray-900 border-slate-300 dark:border-gray-700 text-slate-900 dark:text-gray-100 focus-visible:ring-purple-500 placeholder:text-slate-400 dark:placeholder:text-gray-500"
                     placeholder="Enter password"
                     required
                   />
@@ -106,13 +106,13 @@ export function AdminLogin() {
                 className="space-y-4"
               >
                 <div className="space-y-2">
-                  <Label htmlFor="secondPin" className="text-slate-700">Secondary PIN</Label>
+                  <Label htmlFor="secondPin" className="text-slate-700 dark:text-gray-300">Secondary PIN</Label>
                   <Input
                     id="secondPin"
                     type="password"
                     value={secondPin}
                     onChange={(e) => setSecondPin(e.target.value)}
-                    className="bg-white border-slate-300 text-slate-900 focus-visible:ring-purple-500 placeholder:text-slate-400"
+                    className="bg-white dark:bg-gray-900 border-slate-300 dark:border-gray-700 text-slate-900 dark:text-gray-100 focus-visible:ring-purple-500 placeholder:text-slate-400 dark:placeholder:text-gray-500"
                     placeholder="Enter Secondary PIN"
                     required
                   />
@@ -124,7 +124,7 @@ export function AdminLogin() {
                 <Button
                   type="button"
                   variant="ghost"
-                  className="w-full text-slate-500 hover:text-slate-800"
+                  className="w-full text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-200"
                   onClick={() => {
                     setStep(1);
                     setError("");

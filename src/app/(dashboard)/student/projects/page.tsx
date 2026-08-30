@@ -1,7 +1,7 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
-import { Plus, Search, Filter, MoreVertical, ExternalLink, Download, FileText, Eye } from "lucide-react";
+import { Plus, Search, Filter, MoreVertical, ExternalLink, Download, Eye } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 

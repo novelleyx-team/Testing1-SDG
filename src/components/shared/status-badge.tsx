@@ -14,8 +14,8 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
     Approved: "bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20",
     Reviewed: "bg-blue-500/10 text-blue-500 hover:bg-blue-500/20",
     Rejected: "bg-red-500/10 text-red-500 hover:bg-red-500/20",
-    Draft: "bg-slate-500/10 text-slate-500 hover:bg-slate-500/20",
-    Revision: "bg-amber-100 text-amber-700 hover:bg-amber-200",
+    Draft: "bg-slate-500/10 text-slate-600 dark:text-slate-400 hover:bg-slate-500/20",
+    Revision: "bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20",
   }
 
   return (

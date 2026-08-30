@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { motion } from "motion/react"
-import { Video, Calendar, Clock, Users, ArrowRight, PlayCircle, PhoneCall } from "lucide-react"
+import { Video, Calendar, Clock, ArrowRight, PlayCircle, PhoneCall } from "lucide-react"
 import { BackButton } from "@/components/BackButton"
 import Image from "next/image"
 

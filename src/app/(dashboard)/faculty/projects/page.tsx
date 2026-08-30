@@ -1,12 +1,12 @@
 "use client"
 
-import { useState } from "react"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { useAuthStore } from "@/store/auth-store"
-import { useProjectsStore, Project } from "@/store/projects-store"
+import { useProjectsStore } from "@/store/projects-store"
 import { FolderOpen, Eye, Download } from "lucide-react"
 import { StatusBadge } from "@/components/shared/status-badge"
 
@@ -19,7 +19,7 @@ export default function ProjectsPage() {
   // Filter for projects in this faculty's department
   const departmentProjects = projects.filter(p => p.studentDepartment === (user?.department || "Computer Science"))
 
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null)
+
 
   return (
     <div className="flex-1 space-y-8 p-8 pt-6">
@@ -71,7 +71,7 @@ export default function ProjectsPage() {
                     <TableCell className="text-right">
                       <Dialog>
                         <DialogTrigger render={
-                          <Button variant="outline" size="sm" onClick={() => setSelectedProject(project)} />
+                          <Button variant="outline" size="sm" />
                         }>
                           <Eye className="w-4 h-4 mr-2" /> View
                         </DialogTrigger>

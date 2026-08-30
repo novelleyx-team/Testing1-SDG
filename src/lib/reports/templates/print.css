@@ -1,0 +1,56 @@
+/* Print-specific CSS for PDF Generation */
+@page {
+  size: A4;
+  margin: 0;
+}
+
+body {
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+  font-family: 'Inter', sans-serif;
+  background-color: white;
+  margin: 0;
+  padding: 0;
+}
+
+.page-break {
+  page-break-before: always;
+  page-break-inside: avoid;
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.page-break:first-child {
+  page-break-before: avoid;
+}
+
+.keep-together {
+  page-break-inside: avoid;
+}
+
+.report-header {
+  position: absolute;
+  top: 40px;
+  left: 48px;
+  right: 48px;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 2px solid #E5E7EB;
+  padding-bottom: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #9CA3AF;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Ensure background colors and gradients render correctly in PDF */
+.bg-blue-600 { background-color: #2563eb !important; }
+.text-blue-600 { color: #2563eb !important; }
+.bg-green-500 { background-color: #22c55e !important; }
+.bg-amber-500 { background-color: #f59e0b !important; }
+.bg-red-500 { background-color: #ef4444 !important; }

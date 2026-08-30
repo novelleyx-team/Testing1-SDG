@@ -2,7 +2,7 @@
 
 import { Sidebar } from "./sidebar";
 import { Header } from "./header";
-import { BotMessageSquare } from "lucide-react";
+
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth-store";

@@ -23,7 +23,7 @@ export default function FacultyDashboard() {
   const relevantProjects = user?.department ? projects.filter(p => p.studentDepartment === user.department) : projects;
   
   const pendingCount = relevantProjects.filter(p => p.status === 'Pending').length;
-  const approvedCount = relevantProjects.filter(p => p.status === 'Approved').length;
+
 
   const { data: donutData } = useRealtimeChartData('faculty_sdg_progress', 'status', 'count');
   const { data: lineData } = useRealtimeChartData('faculty_submissions', 'week', 'count');
@@ -72,41 +72,44 @@ export default function FacultyDashboard() {
         />
       </div>
 
-      <Card className="rounded-xl">
+      <Card className="rounded-xl shadow-sm border border-slate-200 dark:border-gray-800 bg-white dark:bg-[#1F2937]">
         <CardHeader>
-          <CardTitle>Recent Submissions</CardTitle>
-          <CardDescription>Projects from your students requiring review or recently evaluated.</CardDescription>
+          <CardTitle className="text-gray-900 dark:text-gray-100">Recent Submissions</CardTitle>
+          <CardDescription className="text-gray-500 dark:text-gray-400">Projects from your students requiring review or recently evaluated.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead className="w-[100px]">ID</TableHead>
-                <TableHead>Student</TableHead>
-                <TableHead>Project Title</TableHead>
-                <TableHead>Target SDG</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+              <TableRow className="border-b border-gray-100 dark:border-gray-800">
+                <TableHead className="w-[100px] text-gray-500 dark:text-gray-400">ID</TableHead>
+                <TableHead className="text-gray-500 dark:text-gray-400">Student</TableHead>
+                <TableHead className="text-gray-500 dark:text-gray-400">Project Title</TableHead>
+                <TableHead className="text-gray-500 dark:text-gray-400">Target SDG</TableHead>
+                <TableHead className="text-gray-500 dark:text-gray-400">Date</TableHead>
+                <TableHead className="text-gray-500 dark:text-gray-400">Status</TableHead>
+                <TableHead className="text-right text-gray-500 dark:text-gray-400">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {relevantProjects.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">No projects submitted yet.</TableCell>
+                  <TableCell colSpan={7} className="text-center py-12 text-gray-500 dark:text-gray-400 bg-gray-50/50 dark:bg-gray-800/30">
+                    <BookOpen size={48} className="mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+                    No projects submitted yet.
+                  </TableCell>
                 </TableRow>
               ) : relevantProjects.map((submission) => (
-                <TableRow key={submission.id}>
-                  <TableCell className="font-medium">{submission.id}</TableCell>
-                  <TableCell>{submission.studentName}</TableCell>
-                  <TableCell>{submission.title}</TableCell>
-                  <TableCell>{submission.targetSdg}</TableCell>
-                  <TableCell>{submission.date}</TableCell>
+                <TableRow key={submission.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                  <TableCell className="font-medium text-gray-900 dark:text-gray-100">{submission.id}</TableCell>
+                  <TableCell className="text-gray-700 dark:text-gray-300">{submission.studentName}</TableCell>
+                  <TableCell className="text-gray-900 dark:text-gray-100 font-medium">{submission.title}</TableCell>
+                  <TableCell className="text-gray-700 dark:text-gray-300">{submission.targetSdg}</TableCell>
+                  <TableCell className="text-gray-500 dark:text-gray-400">{submission.date}</TableCell>
                   <TableCell>
                     <StatusBadge status={submission.status} />
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" onClick={() => setSelectedProject(submission)}>
+                    <Button variant="ghost" size="sm" onClick={() => setSelectedProject(submission)} className="text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30">
                       {submission.status === "Pending" ? "Review" : "View"}
                     </Button>
                   </TableCell>

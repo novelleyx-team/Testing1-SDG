@@ -65,12 +65,13 @@ export const NAVIGATION: Record<Role, NavItem[]> = {
     { title: "Settings", href: "/leadership/settings", icon: "Settings" },
   ],
   [Role.ADMIN]: [
-    { title: "Dashboard", href: "/admin", icon: "LayoutDashboard" },
+    { title: "Dashboard", href: "/admin/dashboard", icon: "LayoutDashboard" },
     { title: "Institutions", href: "/admin/institutions", icon: "Building" },
     { title: "Users", href: "/admin/users", icon: "Users" },
     { title: "Projects", href: "/admin/projects", icon: "Folder" },
     { title: "Analytics", href: "/admin/analytics", icon: "BarChart3" },
     { title: "AI Engine", href: "/admin/ai-engine", icon: "Brain" },
+    { title: "Profile", href: "/admin/profile", icon: "UserCircle" },
     { title: "Settings", href: "/admin/settings", icon: "Settings" },
   ],
 };

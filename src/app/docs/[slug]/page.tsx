@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion } from "motion/react";
-import { ArrowLeft, BookOpen, Clock, Calendar, ThumbsUp, ThumbsDown, MessageSquare, Share2, CheckCircle2, AlertTriangle, Lightbulb } from "lucide-react";
+import { ArrowLeft, BookOpen, Clock, Calendar, ThumbsUp, ThumbsDown, Share2, AlertTriangle, Lightbulb } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 

@@ -15,7 +15,7 @@ const DonutChartCard = dynamic(() => import("./Charts").then((mod) => mod.DonutC
 const BarChartCard = dynamic(() => import("./Charts").then((mod) => mod.BarChartCard), { ssr: false, loading: LoadingChart });
 const LineChartCard = dynamic(() => import("./Charts").then((mod) => mod.LineChartCard), { ssr: false, loading: LoadingChart });
 const WaveChartCard = dynamic(() => import("./Charts").then((mod) => mod.WaveChartCard), { ssr: false, loading: LoadingChart });
-import { Copy, Download, RefreshCw, Activity, Users, FileText, CheckCircle, Search, Filter, UserCheck, Shield, GraduationCap, Briefcase } from "lucide-react";
+import { Copy, RefreshCw, Activity, Users, FileText, CheckCircle, Search, Filter, UserCheck, Shield, GraduationCap, Briefcase } from "lucide-react";
 import { motion } from "framer-motion";
 import { PREDEFINED_USERS } from "@/lib/constants/predefined-users";
 import { Role } from "@/lib/constants/roles";

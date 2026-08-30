@@ -28,7 +28,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-[100dvh] w-full flex flex-col lg:flex-row font-sans bg-gradient-to-br from-blue-50 via-white to-sky-100 lg:overflow-hidden">
       {/* Left Pane - Branding & SDGs (Visible on all devices) */}
-      <div className="flex w-full lg:w-1/2 lg:h-[100dvh] bg-transparent text-gray-900 flex-col p-6 sm:p-8 xl:p-12 relative overflow-hidden shrink-0">
+      <div className="flex w-full lg:w-1/2 lg:h-[100dvh] bg-transparent text-gray-900 dark:text-gray-100 flex-col p-6 sm:p-8 xl:p-12 relative overflow-hidden shrink-0">
         {/* Abstract background effect */}
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03]"></div>
         <div className="absolute -top-[20%] -left-[10%] w-[70%] h-[70%] rounded-full bg-[#2563EB] opacity-10 blur-[120px]"></div>
@@ -47,16 +47,16 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
               <div className="flex items-center gap-2 xl:gap-3">
                 <Globe2 className="w-12 h-12 xl:w-16 xl:h-16 text-[#26BDE2] shrink-0" strokeWidth={1.5} />
                 <div className="flex flex-col">
-                  <span className="text-[26px] xl:text-[36px] font-black text-[#0F172A] tracking-wide leading-none">
+                  <span className="text-[26px] xl:text-[36px] font-black text-[#0F172A] dark:text-white tracking-wide leading-none">
                     SUSTAINABLE
                   </span>
-                  <span className="text-[26px] xl:text-[36px] font-black text-[#0F172A] tracking-wide leading-none mt-1">
+                  <span className="text-[26px] xl:text-[36px] font-black text-[#0F172A] dark:text-white tracking-wide leading-none mt-1">
                     DEVELOPMENT
                   </span>
                 </div>
               </div>
               <div className="flex items-center mt-2 xl:mt-3">
-                <span className="text-[60px] xl:text-[84px] font-black text-[#0F172A] leading-none tracking-widest">
+                <span className="text-[60px] xl:text-[84px] font-black text-[#0F172A] dark:text-white leading-none tracking-widest">
                   G
                 </span>
                 {/* CSS Conic-Gradient Color Wheel for the 'O' */}
@@ -73,17 +73,17 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
                     )`
                   }}
                 >
-                  <div className="w-[60%] h-[60%] bg-white/90 rounded-full shadow-inner"></div>
+                  <div className="w-[60%] h-[60%] bg-white/90 dark:bg-gray-900/90 rounded-full shadow-inner"></div>
                 </div>
-                <span className="text-[60px] xl:text-[84px] font-black text-[#0F172A] leading-none tracking-widest">
+                <span className="text-[60px] xl:text-[84px] font-black text-[#0F172A] dark:text-white leading-none tracking-widest">
                   ALS
                 </span>
               </div>
             </div>
-            <h1 className="text-3xl xl:text-4xl font-bold leading-tight mb-3 text-gray-900">
+            <h1 className="text-3xl xl:text-4xl font-bold leading-tight mb-3 text-gray-900 dark:text-white">
               Empowering Academic Impact
             </h1>
-            <p className="text-slate-600 text-base xl:text-lg leading-relaxed mb-6 xl:mb-8 pr-4">
+            <p className="text-slate-600 dark:text-slate-300 text-base xl:text-lg leading-relaxed mb-6 xl:mb-8 pr-4">
               The premier AI-assisted platform aligning institutional research and student projects with the 17 UN Sustainable Development Goals.
             </p>
           </div>
@@ -93,7 +93,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
         <div className="relative z-10 w-full flex-1 min-h-0 flex flex-col">
           <div className="flex items-center gap-3 mb-4 shrink-0 mt-8 lg:mt-0">
             <Target className="w-5 h-5 xl:w-6 xl:h-6 text-[#2563EB]" />
-            <span className="text-[15px] xl:text-[17px] font-extrabold text-gray-800 uppercase tracking-widest leading-none">
+            <span className="text-[15px] xl:text-[17px] font-extrabold text-gray-800 dark:text-gray-200 uppercase tracking-widest leading-none">
               THE 17 SUSTAINABLE DEVELOPMENT GOALS (SDG)
             </span>
           </div>
@@ -103,7 +103,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
               return (
                 <div 
                   key={index} 
-                  className="flex items-center gap-3 p-2.5 rounded-lg bg-white/60 border border-blue-100/50 hover:bg-white transition-colors shadow-sm"
+                  className="flex items-center gap-3 p-2.5 rounded-lg bg-white/60 dark:bg-[#1F2937]/60 border border-blue-100/50 dark:border-blue-900/30 hover:bg-white dark:hover:bg-[#1F2937] transition-colors shadow-sm"
                 >
                   <div 
                     className="w-9 h-9 shrink-0 rounded-[6px] flex items-center justify-center text-white shadow-sm"
@@ -112,8 +112,8 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
                     <Icon className="w-4 h-4" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">GOAL {index + 1}</span>
-                    <span className="text-xs font-semibold text-slate-700 leading-tight">{sdg.name}</span>
+                    <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-0.5">GOAL {index + 1}</span>
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 leading-tight">{sdg.name}</span>
                   </div>
                 </div>
               )
@@ -131,9 +131,9 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
               <div className="flex justify-center mb-8">
                 <Link 
                   href="/" 
-                  className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors group z-20 bg-white/80 backdrop-blur-sm p-1.5 pr-4 rounded-full shadow-sm border border-gray-200"
+                  className="flex items-center gap-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors group z-20 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-1.5 pr-4 rounded-full shadow-sm border border-gray-200 dark:border-gray-700"
                 >
-                  <div className="w-8 h-8 rounded-full bg-white border border-gray-100 flex items-center justify-center shadow-sm group-hover:bg-gray-50 transition-colors">
+                  <div className="w-8 h-8 rounded-full bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 flex items-center justify-center shadow-sm group-hover:bg-gray-50 dark:group-hover:bg-gray-800 transition-colors">
                     <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
                   </div>
                   <span>Back to Home</span>
@@ -141,9 +141,13 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
               </div>
 
           
-          <div className="bg-white py-10 px-4 sm:px-10 shadow-sm rounded-2xl border border-gray-100 w-full">
-            {children}
+          <div className="relative bg-white/40 dark:bg-[#111827]/40 backdrop-blur-2xl py-10 px-4 sm:px-10 shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)] rounded-[2rem] border border-white/50 dark:border-gray-700/50 w-full overflow-hidden transition-all duration-500">
+            {/* Subtle glass glow inside */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent dark:from-white/5 dark:via-transparent dark:to-transparent pointer-events-none" />
+            <div className="relative z-10">
+              {children}
             </div>
+          </div>
           </div>
         </div>
         </div>

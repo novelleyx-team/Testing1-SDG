@@ -15,7 +15,6 @@ import {
   CheckCircle2, 
   Building,
   Terminal,
-  Activity,
   RefreshCw
 } from "lucide-react";
 

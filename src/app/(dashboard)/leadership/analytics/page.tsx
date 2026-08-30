@@ -9,16 +9,7 @@ import { PyramidChart } from "@/features/analytics/components/pyramid-chart";
 import { BarChart3, TrendingUp, Target, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-function getSeededRandom(seed: string) {
-  let h = 0;
-  for(let i = 0; i < seed.length; i++) 
-    h = Math.imul(31, h) + seed.charCodeAt(i) | 0;
-  return function() {
-    h = Math.imul(h ^ h >>> 16, 2246822507);
-    h = Math.imul(h ^ h >>> 13, 3266489909);
-    return ((h ^= h >>> 16) >>> 0) / 4294967296;
-  };
-}
+
 
 export default function LeadershipAnalyticsPage() {
   const { user } = useAuthStore();
@@ -29,7 +20,7 @@ export default function LeadershipAnalyticsPage() {
   }, []);
 
   const userScope = user?.department || user?.designation || "College";
-  const isDean = user?.designation?.includes("Dean") || user?.designation?.includes("Coordinator") || user?.designation?.includes("Head");
+
 
   const { growthData, fundingDistribution, sdgImpact, impactFunnel } = useMemo(() => {
     return {

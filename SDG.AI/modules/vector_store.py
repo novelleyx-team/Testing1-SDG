@@ -10,7 +10,7 @@ try:
 except ImportError:
     MODEL_AVAILABLE = False
 
-VECTOR_STORE_DIR = r"d:\SDG_Local_Sandbox\sdg_ai_vectors"
+VECTOR_STORE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "SDG_Local_Sandbox", "sdg_ai_vectors")
 os.makedirs(VECTOR_STORE_DIR, exist_ok=True)
 
 class VectorStore:

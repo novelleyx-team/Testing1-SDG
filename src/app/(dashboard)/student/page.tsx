@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { 
   ArrowRight, Brain, Clock, Folder, CheckCircle2, 
-  Droplets, Zap, Leaf, Building2, Lightbulb
+  Droplets, Leaf, Building2, Lightbulb
 } from "lucide-react";
 import { DonutChart } from "@/features/analytics/components/donut-chart";
 import { LineChart } from "@/features/analytics/components/line-chart";
@@ -37,7 +37,7 @@ export default function StudentDashboard() {
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <h1 className="text-[40px] font-bold text-gray-900 dark:text-gray-100 tracking-tight leading-tight">
-              Good Afternoon, {user?.name.split(' ')[0] || 'Abhinav'} 👋
+              Good Afternoon, {user?.name.split(' ')[0] || 'Student'} 👋
             </h1>
             <p className="text-[16px] text-gray-500 dark:text-gray-400 mt-2 max-w-xl leading-relaxed">
               Track your SDG submissions, AI-generated reports, faculty reviews, and personal SDG impact analysis.
@@ -45,15 +45,17 @@ export default function StudentDashboard() {
           </div>
           <div className="flex items-center gap-4 bg-gray-50/80 dark:bg-gray-800/80 backdrop-blur-sm p-4 rounded-[16px] border border-gray-100 dark:border-gray-700">
             <div className="text-center px-4 border-r border-gray-200 dark:border-gray-700">
-              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">4</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{studentProjects.length}</p>
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Projects</p>
             </div>
             <div className="text-center px-4 border-r border-gray-200 dark:border-gray-700">
-              <p className="text-2xl font-bold text-blue-600">8.4</p>
+              <p className="text-2xl font-bold text-blue-600">
+                {studentProjects.length > 0 ? (studentProjects.reduce((acc, p) => acc + (parseFloat(p.aiScore) || 0), 0) / studentProjects.length).toFixed(1) : "0.0"}
+              </p>
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Score</p>
             </div>
             <div className="text-center px-4">
-              <p className="text-2xl font-bold text-amber-600">2</p>
+              <p className="text-2xl font-bold text-amber-600">{studentProjects.filter(p => p.status === 'Pending').length}</p>
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Pending</p>
             </div>
           </div>

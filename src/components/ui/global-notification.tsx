@@ -38,20 +38,20 @@ export function GlobalNotification() {
   };
 
   const bgColors = {
-    success: "bg-emerald-50 border-emerald-100",
-    error: "bg-red-50 border-red-100",
-    info: "bg-blue-50 border-blue-100",
+    success: "bg-emerald-50 dark:bg-emerald-900/30 border-emerald-100 dark:border-emerald-900/50",
+    error: "bg-red-50 dark:bg-red-900/30 border-red-100 dark:border-red-900/50",
+    info: "bg-blue-50 dark:bg-blue-900/30 border-blue-100 dark:border-blue-900/50",
   };
 
   return (
     <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-top-4 fade-in duration-0">
-      <div className={`flex items-start gap-4 p-4 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] border ${bgColors[type]} bg-white min-w-[320px] max-w-md`}>
-        <div className={`p-2 rounded-xl bg-white shadow-sm border ${bgColors[type]}`}>
+      <div className={`flex items-start gap-4 p-4 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.5)] border ${bgColors[type]} bg-white dark:bg-[#1F2937] min-w-[320px] max-w-md`}>
+        <div className={`p-2 rounded-xl bg-white dark:bg-gray-800 shadow-sm border ${bgColors[type]}`}>
           {icons[type]}
         </div>
         <div>
-          <h4 className="font-bold text-gray-900 text-[15px] leading-tight">{title}</h4>
-          <p className="text-sm text-gray-600 mt-0.5 leading-relaxed">{message}</p>
+          <h4 className="font-bold text-gray-900 dark:text-gray-100 text-[15px] leading-tight">{title}</h4>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mt-0.5 leading-relaxed">{message}</p>
         </div>
       </div>
     </div>

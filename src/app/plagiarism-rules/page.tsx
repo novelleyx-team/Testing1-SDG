@@ -1,6 +1,5 @@
 import * as React from "react"
-import { motion } from "motion/react"
-import { ShieldAlert, BookOpen, Fingerprint, Lock, Shield, FileWarning, Eye, Target } from "lucide-react"
+import { ShieldAlert, Fingerprint, Lock, Shield, Eye, Target } from "lucide-react"
 import { BackButton } from "@/components/BackButton"
 
 const guidelines = [

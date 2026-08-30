@@ -79,17 +79,17 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="p-4 border-t border-gray-100 bg-white">
+      <div className="p-4 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-[#111827]">
         <div className={cn("flex items-center", isCollapsed ? "justify-center" : "gap-3")}>
           <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-semibold shadow-sm shrink-0">
             {user.name.charAt(0)}
           </div>
           {!isCollapsed && (
             <div className="flex flex-col flex-1 truncate">
-              <span className="text-sm font-semibold text-gray-900 truncate">
+              <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
                 {user.name}
               </span>
-              <span className="text-xs text-gray-500 truncate capitalize">
+              <span className="text-xs text-gray-500 dark:text-gray-400 truncate capitalize">
                 {user?.designation ? (user?.department ? `${user.designation} - ${user.department}` : user.designation) : user?.role?.toLowerCase() || 'student'}
               </span>
             </div>
@@ -97,7 +97,7 @@ export function Sidebar() {
           {!isCollapsed && (
             <button 
               onClick={handleLogout}
-              className="text-gray-400 hover:text-red-600 transition-colors p-2 rounded-md hover:bg-red-50"
+              className="text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors p-2 rounded-md hover:bg-red-50 dark:hover:bg-red-900/30"
               title="Log out"
             >
               <Icons.LogOut size={18} />

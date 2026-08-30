@@ -17,18 +17,9 @@ interface SuggestionsState {
   deleteSuggestion: (id: string) => void;
 }
 
+// Suggestions start empty - no fake demo data
 export const useSuggestionsStore = create<SuggestionsState>((set) => ({
-  suggestions: [
-    {
-      id: "SUG-1001",
-      authorType: "Faculty",
-      name: "Dr. Alan Turing",
-      topic: "New Template Request",
-      content: "We need a specific template for computational biology projects that automatically checks for genetic sequence plagiarism.",
-      date: "Jul 12, 2026",
-      status: "Reviewed"
-    }
-  ],
+  suggestions: [],
   addSuggestion: (suggestion) => set((state) => {
     const newSug: Suggestion = {
       ...suggestion,

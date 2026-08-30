@@ -4,7 +4,7 @@ import * as React from "react"
 import { motion, useInView, AnimatePresence } from "motion/react"
 import Link from "next/link"
 import { Button, buttonVariants } from "@/components/ui/button"
-import { ArrowRight, BarChart3, ShieldCheck, Zap, Globe2, Building, Target, Lock, Mail, MapPin, Phone, Home } from "lucide-react"
+import { ArrowRight, BarChart3, ShieldCheck, Zap, Globe2, Building, Target, Lock, Mail, MapPin, Phone } from "lucide-react"
 import { useSuggestionsStore } from "@/store/suggestions-store"
 import { contentConfig } from "@/config/content"
 
