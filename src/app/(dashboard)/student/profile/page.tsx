@@ -29,8 +29,7 @@ export default function ProfilePage() {
         email: newEmail,
         phoneNumber: newPhone,
         githubUrl: newGithub,
-        branch: newBranch,
-        department: newDepartment,
+        department: newDepartment || newBranch,
       });
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
@@ -100,7 +99,7 @@ export default function ProfilePage() {
                 <select
                   id="branch"
                   name="branch"
-                  defaultValue={user?.branch || ""}
+                  defaultValue={user?.department || ""}
                   className="flex h-10 w-full rounded-md border bg-gray-50/50 dark:bg-[#111827] border-gray-200 dark:border-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
                   <option value="">Select Branch</option>

@@ -17,7 +17,7 @@ export default function ProjectsPage() {
   const projects = useProjectsStore(state => state.projects)
   
   // Filter for projects in this faculty's department
-  const departmentProjects = projects.filter(p => p.studentDepartment === (user?.department || "Computer Science"))
+  const departmentProjects = projects.filter(p => p.studentDepartment === user?.department)
 
 
 

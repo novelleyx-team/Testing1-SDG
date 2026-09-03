@@ -119,8 +119,6 @@ function LoginForm() {
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     setTimeout(() => {
-      const { registeredUsers } = useAuthStore.getState();
-
       const rolesToMatch = LEADERSHIP_ROLES.includes(data.role)
         ? LEADERSHIP_ROLES
         : [data.role];
@@ -132,15 +130,10 @@ function LoginForm() {
           rolesToMatch.includes(u.role)
       );
 
-      const registeredUser = registeredUsers.find(
-        (u) =>
-          (u.identifier === data.identifier || u.email === data.identifier) &&
-          u.passkey === data.password &&
-          rolesToMatch.includes(u.role)
-      );
-
-      if (predefinedUser || registeredUser) {
-        const userToLogin = predefinedUser || registeredUser;
+      // In a real app this would call the backend API first
+      // For now, we fallback to predefined users if backend isn't available
+      if (predefinedUser) {
+        const userToLogin = predefinedUser;
 
         // Check if user has 2FA enabled
         const securityData = localStorage.getItem('novelleyx-security');
@@ -194,7 +187,6 @@ function LoginForm() {
     
     setIsLoading(true);
     // Verify TOTP code
-    const { registeredUsers } = useAuthStore.getState();
     const rolesToMatch = LEADERSHIP_ROLES.includes(pendingUser.role) ? LEADERSHIP_ROLES : [pendingUser.role];
     
     const predefinedUser = PREDEFINED_USERS.find(
@@ -203,14 +195,8 @@ function LoginForm() {
         u.passkey === pendingUser.password &&
         rolesToMatch.includes(u.role)
     );
-    const registeredUser = registeredUsers.find(
-      (u) =>
-        (u.identifier === pendingUser.identifier || u.email === pendingUser.identifier) &&
-        u.passkey === pendingUser.password &&
-        rolesToMatch.includes(u.role)
-    );
     
-    const userToLogin = predefinedUser || registeredUser;
+    const userToLogin = predefinedUser;
     if (userToLogin) {
       // Validate TOTP - in production this would use a real TOTP library
       // For now, accept any 6-digit code as the secret is stored client-side
@@ -414,7 +400,9 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
       const { registerUser } = useAuthStore.getState();
 
       let department = data.department;
-      if (data.role === Role.HOD || data.role === Role.DEAN) {
+      if (data.role === Role.STUDENT) {
+        department = data.branch;
+      } else if (data.role === Role.HOD || data.role === Role.DEAN) {
         const entry = VALID_REGISTRATION_IDS.find(
           (e) => e.id === data.identifier.toUpperCase() && e.allowedRole === data.role
         );
@@ -429,7 +417,6 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
         email: data.email,
         role: data.role,
         department: department,
-        branch: data.branch,
         identifier: data.identifier,
         passkey: data.password,
         phoneNumber: data.phoneNumber,

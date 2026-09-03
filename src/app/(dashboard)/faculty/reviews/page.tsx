@@ -12,7 +12,7 @@ export default function ReviewsPage() {
   const updateProjectStatus = useProjectsStore(state => state.updateProjectStatus)
   
   // Filter for pending projects for this faculty's department
-  const pendingProjects = projects.filter(p => p.status === 'Pending' && p.studentDepartment === (user?.department || "Computer Science"))
+  const pendingProjects = projects.filter(p => p.status === 'Pending' && p.studentDepartment === user?.department)
 
   return (
     <div className="flex-1 space-y-8 p-8 pt-6">

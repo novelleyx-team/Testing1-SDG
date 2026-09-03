@@ -167,7 +167,7 @@ function ProjectFormContent() {
     
     // Static fields
     const studentName = formData.get("name")?.toString() || user?.name || "Unknown";
-    const department = formData.get("department")?.toString() || user?.department || "Computer Science";
+    const department = formData.get("department")?.toString() || user?.department || "Unknown";
     
     if (["TPL-MAJOR", "TPL-MINOR", "TPL-CASUAL"].includes(selectedTemplateId)) {
       setSimulationPhase(2);

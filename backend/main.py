@@ -95,9 +95,16 @@ async def register_user(user: UserRegister):
 async def login_user(creds: UserLogin):
     conn = db.get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM users WHERE email = %s", (creds.email,))
+    cursor.execute("""
+        SELECT u.*, d.name as department_name 
+        FROM users u 
+        LEFT JOIN departments d ON u.department_id = d.id 
+        WHERE u.email = %s OR u.id = %s
+    """, (creds.email, creds.email))
     user = cursor.fetchone()
     if user:
+        if user.get('department_name'):
+            user['department'] = user['department_name']
         return {"message": "Login successful", "user": user}
     raise HTTPException(status_code=401, detail="Invalid credentials or user not found.")
 

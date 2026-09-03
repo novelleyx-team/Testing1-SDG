@@ -72,7 +72,8 @@ def _init_db(conn):
         role TEXT,
         avatar TEXT,
         college_id TEXT,
-        department TEXT
+        department TEXT,
+        department_id INTEGER
     )''')
     conn.execute('''
     CREATE TABLE IF NOT EXISTS projects (
@@ -83,13 +84,14 @@ def _init_db(conn):
         status TEXT,
         faculty_id TEXT,
         department TEXT,
+        department_id INTEGER,
         sdg_match_score INTEGER,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )''')
     conn.execute('''
     CREATE TABLE IF NOT EXISTS departments (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT
+        name TEXT UNIQUE
     )''')
     
     # NEW TABLES FOR SCALABILITY
@@ -114,6 +116,48 @@ def _init_db(conn):
         radar_url TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )''')
+    
+    # Seed Departments
+    official_deps = [
+        "Computer Science", 
+        "Computer Science Data (CSD)", 
+        "Artificial Intelligence & Machine Learning", 
+        "Mechanical Engineering", 
+        "Civil Engineering", 
+        "Electronics & Communication", 
+        "Electrical Engineering",
+        "Information Technology",
+        "Cyber Security",
+        "MBA",
+        "Other"
+    ]
+    for dep in official_deps:
+        conn.execute("INSERT OR IGNORE INTO departments (name) VALUES (?)", (dep,))
+        
+    # Auto-migrate legacy columns if department_id is null
+    try:
+        # We try to add columns just in case the tables were created before this script update
+        # SQLite ALTER TABLE ADD COLUMN ignores if it exists (in some versions, but we catch the error)
+        conn.execute("ALTER TABLE users ADD COLUMN department_id INTEGER")
+    except:
+        pass
+    try:
+        conn.execute("ALTER TABLE projects ADD COLUMN department_id INTEGER")
+    except:
+        pass
+        
+    # Migrate data
+    conn.execute("""
+        UPDATE users 
+        SET department_id = (SELECT id FROM departments WHERE name = users.department)
+        WHERE department_id IS NULL AND department IS NOT NULL
+    """)
+    conn.execute("""
+        UPDATE projects 
+        SET department_id = (SELECT id FROM departments WHERE name = projects.department)
+        WHERE department_id IS NULL AND department IS NOT NULL
+    """)
+    
     conn.commit()
 
 
@@ -135,35 +179,60 @@ def get_departments():
 def create_user(user_id, name, email, role, avatar=None, college_id=None, department=None):
     conn = get_db_connection()
     cursor = conn.cursor()
-    query = """INSERT INTO users (id, name, email, role, avatar, college_id, department) 
-               VALUES (%s, %s, %s, %s, %s, %s, %s)"""
-    cursor.execute(query, (user_id, name, email, role, avatar, college_id, department))
+    # Resolve department ID first
+    cursor.execute("SELECT id FROM departments WHERE name = %s", (department,))
+    dep_row = cursor.fetchone()
+    dep_id = dep_row[0] if dep_row else None
+    
+    query = """INSERT INTO users (id, name, email, role, avatar, college_id, department, department_id) 
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"""
+    cursor.execute(query, (user_id, name, email, role, avatar, college_id, department, dep_id))
     conn.commit()
     return user_id
 
 def get_user(user_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
-    return cursor.fetchone()
+    cursor.execute("""
+        SELECT u.*, d.name as department_name 
+        FROM users u 
+        LEFT JOIN departments d ON u.department_id = d.id 
+        WHERE u.id = %s
+    """, (user_id,))
+    user = cursor.fetchone()
+    if user and user.get('department_name'):
+        user['department'] = user['department_name']  # Ensure canonical value
+    return user
 
 # --- PROJECTS ---
 
 def create_project(project_id, student_id, title, abstract, status, faculty_id, department, sdg_match_score):
     conn = get_db_connection()
     cursor = conn.cursor()
-    query = """INSERT INTO projects (id, student_id, title, abstract, status, faculty_id, department, sdg_match_score) 
-               VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"""
-    cursor.execute(query, (project_id, student_id, title, abstract, status, faculty_id, department, sdg_match_score))
+    
+    cursor.execute("SELECT id FROM departments WHERE name = %s", (department,))
+    dep_row = cursor.fetchone()
+    dep_id = dep_row[0] if dep_row else None
+    
+    query = """INSERT INTO projects (id, student_id, title, abstract, status, faculty_id, department, department_id, sdg_match_score) 
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+    cursor.execute(query, (project_id, student_id, title, abstract, status, faculty_id, department, dep_id, sdg_match_score))
     conn.commit()
     return project_id
 
 def get_projects_by_student(student_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM projects WHERE student_id = %s", (student_id,))
+    cursor.execute("""
+        SELECT p.*, d.name as department_name 
+        FROM projects p 
+        LEFT JOIN departments d ON p.department_id = d.id 
+        WHERE p.student_id = %s
+    """, (student_id,))
     res = cursor.fetchall()
     for r in res:
+        if r.get('department_name'):
+            r['department'] = r['department_name']
         if isinstance(r.get('created_at'), str):
             try:
                 r['created_at'] = datetime.datetime.strptime(r['created_at'], "%Y-%m-%d %H:%M:%S")
@@ -174,9 +243,15 @@ def get_projects_by_student(student_id):
 def get_all_projects():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM projects")
+    cursor.execute("""
+        SELECT p.*, d.name as department_name 
+        FROM projects p 
+        LEFT JOIN departments d ON p.department_id = d.id
+    """)
     res = cursor.fetchall()
     for r in res:
+        if r.get('department_name'):
+            r['department'] = r['department_name']
         if isinstance(r.get('created_at'), str):
             try:
                 r['created_at'] = datetime.datetime.strptime(r['created_at'], "%Y-%m-%d %H:%M:%S")
@@ -288,14 +363,25 @@ def get_faculty_analytics(department):
     if not department:
         return {"department_projects": 0, "average_score": 0.0, "pending_review": 0}
         
-    cursor.execute("SELECT COUNT(*) as count FROM projects WHERE department = %s", (department,))
-    total = cursor.fetchone()['count']
+    cursor.execute("SELECT id FROM departments WHERE name = %s", (department,))
+    dep_row = cursor.fetchone()
     
-    cursor.execute("SELECT AVG(sdg_match_score) as avg FROM projects WHERE department = %s AND sdg_match_score > 0", (department,))
-    avg = cursor.fetchone()['avg'] or 0
-    
-    cursor.execute("SELECT COUNT(*) as count FROM projects WHERE department = %s AND status = 'Pending'", (department,))
-    pending = cursor.fetchone()['count']
+    if not dep_row:
+        # Fallback if somehow department wasn't migrated
+        cursor.execute("SELECT COUNT(*) as count FROM projects WHERE department = %s", (department,))
+        total = cursor.fetchone()['count']
+        cursor.execute("SELECT AVG(sdg_match_score) as avg FROM projects WHERE department = %s AND sdg_match_score > 0", (department,))
+        avg = cursor.fetchone()['avg'] or 0
+        cursor.execute("SELECT COUNT(*) as count FROM projects WHERE department = %s AND status = 'Pending'", (department,))
+        pending = cursor.fetchone()['count']
+    else:
+        dep_id = dep_row['id']
+        cursor.execute("SELECT COUNT(*) as count FROM projects WHERE department_id = %s", (dep_id,))
+        total = cursor.fetchone()['count']
+        cursor.execute("SELECT AVG(sdg_match_score) as avg FROM projects WHERE department_id = %s AND sdg_match_score > 0", (dep_id,))
+        avg = cursor.fetchone()['avg'] or 0
+        cursor.execute("SELECT COUNT(*) as count FROM projects WHERE department_id = %s AND status = 'Pending'", (dep_id,))
+        pending = cursor.fetchone()['count']
     
     return {
         "department_projects": total,

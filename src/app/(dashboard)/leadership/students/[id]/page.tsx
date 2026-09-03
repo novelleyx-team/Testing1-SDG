@@ -10,10 +10,9 @@ import { PREDEFINED_USERS } from "@/lib/constants/predefined-users";
 export default function StudentDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const studentId = resolvedParams.id;
-  const { registeredUsers } = useAuthStore();
   
-  // Find student in either predefined or registered users
-  const student = [...PREDEFINED_USERS, ...registeredUsers].find(
+  // Find student in predefined users (temporary fallback until full API integration)
+  const student = PREDEFINED_USERS.find(
     u => u.id === studentId || u.id === decodeURIComponent(studentId)
   );
 
@@ -63,10 +62,6 @@ export default function StudentDetailsPage({ params }: { params: Promise<{ id: s
               <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
                 <MapPin size={16} className="text-gray-400 dark:text-gray-500" />
                 <span>{student.department || "No Department"}</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
-                <GraduationCap size={16} className="text-gray-400 dark:text-gray-500" />
-                <span>{student.branch || "No Branch"}</span>
               </div>
             </div>
           </CardContent>

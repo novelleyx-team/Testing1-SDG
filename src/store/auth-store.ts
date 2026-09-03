@@ -14,7 +14,6 @@ export interface User {
   identifier?: string;
   phoneNumber?: string;
   githubUrl?: string;
-  branch?: string;
 }
 
 interface AuthState {
@@ -47,7 +46,7 @@ export const useAuthStore = create<AuthState>()(
               id: backendUser.id,
               name: backendUser.name,
               role: backendUser.role,
-              branch: backendUser.department,
+              department: backendUser.department,
             };
             set({ user: fullUser });
           } else {
@@ -69,7 +68,7 @@ export const useAuthStore = create<AuthState>()(
               name: user.name,
               email: user.email,
               role: user.role,
-              department: user.branch || user.department,
+              department: user.department,
               passkey: user.passkey
             })
           });
@@ -98,6 +97,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
+      version: 2, // Bump version to force cache invalidation and purge corrupted CSE data
     }
   )
 );

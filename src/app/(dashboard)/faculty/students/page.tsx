@@ -7,7 +7,7 @@ import { UserCircle } from "lucide-react"
 
 export default function StudentsPage() {
   const { user } = useAuthStore()
-  const department = user?.department || "Computer Science"
+  const department = user?.department || "Unknown"
 
   // Generate exactly 20 mock students for the faculty's department
   const students: { id: string, name: string, department: string, ongoingProjects: number, avgSdgScore: string, status: string }[] = [];

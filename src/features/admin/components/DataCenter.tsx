@@ -16,7 +16,6 @@ import { useAuthStore } from "@/store/auth-store";
 export function DataCenter() {
   const [activeTab, setActiveTab] = useState<'students' | 'faculty' | 'hods' | 'deans'>('students');
   const [searchTerm, setSearchTerm] = useState("");
-  const { registeredUsers } = useAuthStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -30,8 +29,8 @@ export function DataCenter() {
     { id: 'deans', label: 'Deans', icon: Shield },
   ] as const;
 
-  // Combine predefined users and dynamically registered users
-  const allUsers = [...PREDEFINED_USERS, ...(registeredUsers || [])];
+  // Combine predefined users (API integration pending)
+  const allUsers = [...PREDEFINED_USERS];
 
   const studentsData = allUsers.filter((u) => u.role === Role.STUDENT).map(u => ({
     id: u.id,
