@@ -54,7 +54,7 @@ def analyze_and_map_sdgs(project: ProjectDetails) -> AIAnalysisResult:
     RULES:
     1. Distinguish between Claim, Evidence, and Inference.
     2. Only assign an SDG if there is clear evidence in the project description.
-    3. Classify each relevant SDG as 'primary' (direct contribution), 'secondary' (indirect), 'weak' (possible but lacks evidence), or 'non-relevant'.
+    3. Classify each relevant SDG as 'primary' (direct contribution), 'secondary' (indirect), 'weak' (possible but lacks evidence), or 'non-relevant'. You MUST extract multiple SDGs if applicable.
     4. Never hallucinate statistics or targets. 
     5. Return missing evidence required to strengthen the claim.
     """
@@ -77,6 +77,7 @@ def generate_impact_score(project: ProjectDetails, analysis: AIAnalysisResult) -
     2. Evaluate Relevance, Evidence, Impact, Measurability, Scalability, and Sustainability out of 100.
     3. Calculate an overall score out of 100 based on the evidence provided. 
     4. If evidence is weak, scores must be strictly lowered.
+    5. Explicitly identify indirect impacts (secondary benefits), sustainability risks, and missing evidence required for higher confidence.
     """
     return _get_llm_response(prompt, AIImpactResult)
 

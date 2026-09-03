@@ -372,3 +372,20 @@ async def upload_file(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to upload file: {str(e)}")
 
+# --- ANALYTICS API ---
+
+@app.get("/api/analytics/student/{student_id}")
+async def get_student_analytics_api(student_id: str):
+    return db.get_student_analytics(student_id)
+
+@app.get("/api/analytics/faculty/{department}")
+async def get_faculty_analytics_api(department: str):
+    return db.get_faculty_analytics(department)
+
+@app.get("/api/analytics/leadership")
+async def get_leadership_analytics_api():
+    return db.get_leadership_analytics()
+
+@app.get("/api/analytics/admin")
+async def get_admin_analytics_api():
+    return db.get_admin_analytics()

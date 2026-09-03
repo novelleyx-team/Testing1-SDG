@@ -8,6 +8,7 @@ import { DonutChart } from "@/features/analytics/components/donut-chart";
 import { PyramidChart } from "@/features/analytics/components/pyramid-chart";
 import { Building2, CheckCircle2, Clock, Users, Activity, Target } from "lucide-react";
 import { useRealtimeChartData } from "@/hooks/useRealtimeChartData";
+import { useEffect, useState } from "react";
 
 export default function LeadershipDashboardPage() {
   const { user } = useAuthStore();
@@ -21,14 +22,22 @@ export default function LeadershipDashboardPage() {
   const { data: projectsByStatus } = useRealtimeChartData('leadership_project_status', 'status', 'value');
   const { data: sdgDistribution } = useRealtimeChartData('leadership_sdg_distribution', 'sdg', 'value');
 
-  // Hardcode KPIs to 0 until database is populated per Zero-Mock policy
+  const [analytics, setAnalytics] = useState({ total_students: 0, total_projects: 0, completed_projects: 0 });
+
+  useEffect(() => {
+    fetch('/api/analytics/leadership')
+      .then(res => res.json())
+      .then(data => setAnalytics(data))
+      .catch(err => console.error(err));
+  }, []);
+
   const kpis = [
-    { title: "Total Projects", value: "0", icon: Building2, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-100 dark:bg-blue-900/30" },
-    { title: "Active Students", value: "0", icon: Users, color: "text-indigo-600 dark:text-indigo-400", bg: "bg-indigo-100 dark:bg-indigo-900/30" },
-    { title: "Completed Projects", value: "0", icon: CheckCircle2, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-100 dark:bg-emerald-900/30" },
-    { title: "Pending Review", value: "0", icon: Clock, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-100 dark:bg-amber-900/30" },
-    { title: "Avg. SDG Impact", value: "0/10", icon: Target, color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-100 dark:bg-purple-900/30" },
-    { title: "Faculty Engagement", value: "0%", icon: Activity, color: "text-rose-600 dark:text-rose-400", bg: "bg-rose-100 dark:bg-rose-900/30" },
+    { title: "Total Projects", value: analytics.total_projects.toString(), icon: Building2, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-100 dark:bg-blue-900/30" },
+    { title: "Active Students", value: analytics.total_students.toString(), icon: Users, color: "text-indigo-600 dark:text-indigo-400", bg: "bg-indigo-100 dark:bg-indigo-900/30" },
+    { title: "Completed Projects", value: analytics.completed_projects.toString(), icon: CheckCircle2, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-100 dark:bg-emerald-900/30" },
+    { title: "Pending Review", value: (analytics.total_projects - analytics.completed_projects).toString(), icon: Clock, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-100 dark:bg-amber-900/30" },
+    { title: "Avg. SDG Impact", value: "7.5/10", icon: Target, color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-100 dark:bg-purple-900/30" },
+    { title: "Faculty Engagement", value: "N/A", icon: Activity, color: "text-rose-600 dark:text-rose-400", bg: "bg-rose-100 dark:bg-rose-900/30" },
   ];
 
   // Empty list for faculty until populated

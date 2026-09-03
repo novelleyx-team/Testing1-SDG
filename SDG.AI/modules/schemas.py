@@ -68,6 +68,9 @@ class AIImpactResult(BaseModel):
     social: ImpactDimension
     economic: ImpactDimension
     detailed_scores: ImpactScores
+    indirect_impact: str = Field(..., description="What secondary benefits may result")
+    sustainability_risks: str = Field(..., description="What could reduce the project's SDG impact")
+    missing_evidence: str = Field(..., description="What information is required to increase confidence")
     overall_score: int = Field(..., description="Overall impact score 0-100")
 
 class AIRecommendationResult(BaseModel):

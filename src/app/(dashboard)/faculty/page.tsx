@@ -12,6 +12,7 @@ import { BookOpen, Clock, Users, X, Check, RefreshCw } from "lucide-react"
 import { useProjectsStore, type Project } from "@/store/projects-store"
 import { useAuthStore } from "@/store/auth-store"
 import { useRealtimeChartData } from "@/hooks/useRealtimeChartData"
+import { useEffect } from "react"
 
 export default function FacultyDashboard() {
   const { user } = useAuthStore()
@@ -22,7 +23,16 @@ export default function FacultyDashboard() {
   // Filter by department if the user has one, else show all (for demo purposes we could just show all or filter)
   const relevantProjects = user?.department ? projects.filter(p => p.studentDepartment === user.department) : projects;
   
-  const pendingCount = relevantProjects.filter(p => p.status === 'Pending').length;
+  const [analytics, setAnalytics] = useState({ department_projects: 0, average_score: 0.0, pending_review: 0 });
+
+  useEffect(() => {
+    if (user?.department) {
+      fetch(`/api/analytics/faculty/${user.department}`)
+        .then(res => res.json())
+        .then(data => setAnalytics(data))
+        .catch(err => console.error(err));
+    }
+  }, [user?.department]);
 
 
   const { data: donutData } = useRealtimeChartData('faculty_sdg_progress', 'status', 'count');
@@ -37,23 +47,23 @@ export default function FacultyDashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <StatCard
           title="Pending Reviews"
-          value={pendingCount.toString()}
+          value={analytics.pending_review.toString()}
           icon={Clock}
           trend="Action required"
           trendDirection="up"
         />
         <StatCard
-          title="Students Under Supervision"
-          value="0"
+          title="Department Projects"
+          value={analytics.department_projects.toString()}
           icon={Users}
           trend="In your department"
           trendDirection="up"
         />
         <StatCard
           title="Average SDG Impact"
-          value="0/10"
+          value={`${analytics.average_score}/10`}
           icon={BookOpen}
-          trend="No data"
+          trend="Based on AI scoring"
           trendDirection="up"
         />
       </div>

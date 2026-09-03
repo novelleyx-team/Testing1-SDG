@@ -19,7 +19,6 @@ export interface User {
 
 interface AuthState {
   user: User | null;
-  registeredUsers: User[];
   login: (user: User) => Promise<void>;
   logout: () => void;
   registerUser: (user: User) => Promise<void>;
@@ -32,7 +31,6 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null, 
-      registeredUsers: [],
       login: async (userCreds) => {
         try {
           const res = await fetch('/api/login', {
@@ -76,7 +74,6 @@ export const useAuthStore = create<AuthState>()(
             })
           });
           set((state) => ({ 
-            registeredUsers: [...state.registeredUsers, user],
             user: user 
           }));
         } catch (e) {

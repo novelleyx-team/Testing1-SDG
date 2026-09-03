@@ -13,15 +13,20 @@ import { useRealtimeChartData } from "@/hooks/useRealtimeChartData";
 
 import { useProjectsStore } from "@/store/projects-store";
 import { EmptyState } from "@/components/EmptyState";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function StudentDashboard() {
   const { user } = useAuthStore();
   const { projects, fetchStudentProjects } = useProjectsStore();
+  const [analytics, setAnalytics] = useState({ total_projects: 0, average_score: 0.0, pending_projects: 0 });
   
   useEffect(() => {
     if (user?.id) {
       fetchStudentProjects(user.id);
+      fetch(`/api/analytics/student/${user.id}`)
+        .then(res => res.json())
+        .then(data => setAnalytics(data))
+        .catch(err => console.error(err));
     }
   }, [user?.id, fetchStudentProjects]);
 
@@ -45,17 +50,17 @@ export default function StudentDashboard() {
           </div>
           <div className="flex items-center gap-4 bg-gray-50/80 dark:bg-gray-800/80 backdrop-blur-sm p-4 rounded-[16px] border border-gray-100 dark:border-gray-700">
             <div className="text-center px-4 border-r border-gray-200 dark:border-gray-700">
-              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{studentProjects.length}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{analytics.total_projects}</p>
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Projects</p>
             </div>
             <div className="text-center px-4 border-r border-gray-200 dark:border-gray-700">
               <p className="text-2xl font-bold text-blue-600">
-                {studentProjects.length > 0 ? (studentProjects.reduce((acc, p) => acc + (parseFloat(p.aiScore) || 0), 0) / studentProjects.length).toFixed(1) : "0.0"}
+                {analytics.average_score}
               </p>
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Score</p>
             </div>
             <div className="text-center px-4">
-              <p className="text-2xl font-bold text-amber-600">{studentProjects.filter(p => p.status === 'Pending').length}</p>
+              <p className="text-2xl font-bold text-amber-600">{analytics.pending_projects}</p>
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Pending</p>
             </div>
           </div>
@@ -71,7 +76,7 @@ export default function StudentDashboard() {
               <p className="text-sm font-semibold text-gray-500 flex items-center gap-2">
                 <Folder size={16} /> Projects Submitted
               </p>
-              <h3 className="text-[36px] font-bold text-gray-900 dark:text-gray-100 mt-2">{studentProjects.length < 10 ? `0${studentProjects.length}` : studentProjects.length}</h3>
+              <h3 className="text-[36px] font-bold text-gray-900 dark:text-gray-100 mt-2">{analytics.total_projects < 10 ? `0${analytics.total_projects}` : analytics.total_projects}</h3>
             </div>
             <div className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2.5 py-1 rounded-full text-xs font-bold">
               Total Count
@@ -92,19 +97,19 @@ export default function StudentDashboard() {
                 <Brain size={16} /> AI SDG Score
               </p>
               <h3 className="text-[36px] font-bold text-gray-900 dark:text-gray-100 mt-2 flex items-baseline gap-2">
-                {studentProjects.length > 0 ? (studentProjects.reduce((acc, p) => acc + (parseFloat(p.aiScore) || 0), 0) / studentProjects.length).toFixed(1) : "0.0"} <span className="text-sm font-normal text-gray-400">/ 10</span>
+                {analytics.average_score} <span className="text-sm font-normal text-gray-400">/ 10</span>
               </h3>
             </div>
             <div className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2.5 py-1 rounded-full text-xs font-bold">
-              {studentProjects.length > 0 ? "Analyzed" : "N/A"}
+              {analytics.total_projects > 0 ? "Analyzed" : "N/A"}
             </div>
           </div>
           <div className="mt-6 flex items-center gap-3">
             <div className="h-2 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-              <div className={`h-full bg-indigo-600 rounded-full transition-all duration-0`} style={{width: `${studentProjects.length > 0 ? (studentProjects.reduce((acc, p) => acc + (parseFloat(p.aiScore) || 0), 0) / studentProjects.length) * 10 : 0}%`}}></div>
+              <div className={`h-full bg-indigo-600 rounded-full transition-all duration-0`} style={{width: `${analytics.average_score * 10}%`}}></div>
             </div>
             <span className="text-xs font-bold text-indigo-600">
-              {studentProjects.length > 0 ? ((studentProjects.reduce((acc, p) => acc + (parseFloat(p.aiScore) || 0), 0) / studentProjects.length) * 10).toFixed(0) : "0"}%
+              {(analytics.average_score * 10).toFixed(0)}%
             </span>
           </div>
         </Card>
