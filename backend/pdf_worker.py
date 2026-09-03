@@ -9,11 +9,8 @@ if parent_dir not in sys.path:
     sys.path.append(parent_dir)
 
 from Superbase_db import database as db
-
-# --- PATHING FOR STORAGE SANDBOX ---
-SANDBOX_DIR = os.getenv("SANDBOX_DIR", os.path.join(os.getcwd(), "SDG_Local_Sandbox"))
-REPORTS_DIR = os.path.join(SANDBOX_DIR, "reports")
-os.makedirs(REPORTS_DIR, exist_ok=True)
+from backend.storage.service import StorageService
+from backend.storage.config import PARTITIONS
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("PDFWorker")
@@ -28,7 +25,9 @@ async def generate_pdf(job_id: str, report_id: str, project_id: str):
     # Define paths and URLs
     nextjs_url = f"http://127.0.0.1:3000/reports/{report_id}/preview"
     output_filename = f"SDG_Report_{report_id}.pdf"
-    output_filepath = os.path.join(REPORTS_DIR, output_filename)
+    
+    # Store temporarily in temp partition first
+    output_filepath = os.path.join(PARTITIONS["temp"], output_filename)
     
     try:
         async with async_playwright() as p:
@@ -59,8 +58,26 @@ async def generate_pdf(job_id: str, report_id: str, project_id: str):
         if not os.path.exists(output_filepath) or os.path.getsize(output_filepath) == 0:
             raise Exception("Generated PDF file is empty or missing.")
             
-        logger.info(f"Successfully generated PDF: {output_filepath}")
-        db.update_pdf_job(job_id, status="COMPLETED", storage_location=output_filepath)
+        # Register file via StorageService (this will move it to the proper persistent directory and log it)
+        # We need the owner_id to properly assign the file. Let's get it from the project.
+        conn = db.get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT student_id FROM projects WHERE id = %s", (project_id,))
+        proj_record = cursor.fetchone()
+        owner_id = proj_record["student_id"] if proj_record else "system"
+        
+        reg = StorageService.register_system_file(
+            source_path=output_filepath, 
+            owner_id=owner_id, 
+            project_id=project_id, 
+            original_filename=output_filename, 
+            mime_type="application/pdf"
+        )
+            
+        logger.info(f"Successfully generated and stored PDF: {reg['absolute_path']}")
+        
+        # Update pdf_job with new storage location
+        db.update_pdf_job(job_id, status="COMPLETED", storage_location=reg['absolute_path'])
         
     except Exception as e:
         logger.error(f"Error generating PDF for job {job_id}: {str(e)}")

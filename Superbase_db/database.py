@@ -131,6 +131,143 @@ def _init_db(conn):
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )''')
     
+    conn.execute('''
+    CREATE TABLE IF NOT EXISTS files (
+        file_id TEXT PRIMARY KEY,
+        owner_id TEXT,
+        project_id TEXT,
+        original_filename TEXT,
+        storage_key TEXT,
+        mime_type TEXT,
+        size_bytes INTEGER,
+        checksum TEXT,
+        status TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )''')
+    
+    conn.execute('''
+    CREATE TABLE IF NOT EXISTS storage_usage (
+        scope TEXT,
+        scope_id TEXT,
+        bytes_used INTEGER DEFAULT 0,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY(scope, scope_id)
+    )''')
+    
+    conn.execute('''
+    CREATE TABLE IF NOT EXISTS storage_events (
+        event_id TEXT PRIMARY KEY,
+        file_id TEXT,
+        action TEXT,
+        actor_id TEXT,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    )''')
+    
+    # --- AI ANALYSIS TABLES ---
+    conn.execute('''
+    CREATE TABLE IF NOT EXISTS ai_analysis (
+        analysis_id TEXT PRIMARY KEY,
+        project_id TEXT,
+        submission_version INTEGER DEFAULT 1,
+        status TEXT,
+        overall_confidence REAL,
+        overall_sdg_assessment TEXT,
+        environmental_impact TEXT,
+        social_impact TEXT,
+        economic_impact TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )''')
+    
+    conn.execute('''
+    CREATE TABLE IF NOT EXISTS ai_sdg_mappings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        analysis_id TEXT,
+        sdg_number INTEGER,
+        sdg_name TEXT,
+        classification TEXT,
+        target TEXT,
+        reasoning TEXT,
+        evidence TEXT,
+        evidence_strength TEXT,
+        confidence REAL
+    )''')
+    
+    conn.execute('''
+    CREATE TABLE IF NOT EXISTS ai_claims (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        analysis_id TEXT,
+        claim TEXT,
+        source TEXT,
+        evidence TEXT,
+        verification_status TEXT
+    )''')
+    
+    conn.execute('''
+    CREATE TABLE IF NOT EXISTS ai_recommendations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        analysis_id TEXT,
+        recommendation TEXT
+    )''')
+
+    conn.execute('''
+    CREATE TABLE IF NOT EXISTS ai_contradictions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        analysis_id TEXT,
+        student_claim TEXT,
+        documented_result TEXT,
+        measured_result TEXT,
+        verification_status TEXT,
+        explanation TEXT
+    )''')
+    
+    conn.execute('''
+    CREATE TABLE IF NOT EXISTS ai_kpis (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        analysis_id TEXT,
+        kpi_name TEXT,
+        original_value TEXT,
+        original_unit TEXT,
+        normalized_value REAL,
+        normalized_unit TEXT,
+        evidence TEXT
+    )''')
+    
+    conn.execute('''
+    CREATE TABLE IF NOT EXISTS ai_government_alignment (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        analysis_id TEXT,
+        government_body TEXT,
+        framework_name TEXT,
+        indicator TEXT,
+        alignment_strength TEXT,
+        evidence TEXT
+    )''')
+    
+    conn.execute('''
+    CREATE TABLE IF NOT EXISTS ai_sources (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        analysis_id TEXT,
+        source_title TEXT,
+        organization TEXT,
+        url TEXT,
+        publication_date TEXT,
+        source_type TEXT,
+        authority_level TEXT,
+        relevant_claim TEXT
+    )''')
+    
+    conn.execute('''
+    CREATE TABLE IF NOT EXISTS knowledge_documents (
+        id TEXT PRIMARY KEY,
+        content TEXT,
+        source_type TEXT,
+        authority_level TEXT,
+        retrieved_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        version TEXT
+    )''')
+
     # Seed Departments
     official_deps = [
         "Computer Science", 
@@ -479,3 +616,180 @@ def get_admin_analytics():
         "system_uptime": "99.9%",
         "security_alerts": 0
     }
+
+# --- STORAGE MANAGEMENT ---
+
+def register_file(file_id, owner_id, project_id, original_filename, storage_key, mime_type, size_bytes, checksum, status="ACTIVE"):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    query = """INSERT INTO files (file_id, owner_id, project_id, original_filename, storage_key, mime_type, size_bytes, checksum, status) 
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+    cursor.execute(query, (file_id, owner_id, project_id, original_filename, storage_key, mime_type, size_bytes, checksum, status))
+    conn.commit()
+    return file_id
+
+def get_file(file_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM files WHERE file_id = %s", (file_id,))
+    return cursor.fetchone()
+
+def update_file_status(file_id, status):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE files SET status = %s, updated_at = CURRENT_TIMESTAMP WHERE file_id = %s", (status, file_id))
+    conn.commit()
+
+def record_storage_usage(scope, scope_id, bytes_diff):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT bytes_used FROM storage_usage WHERE scope = %s AND scope_id = %s", (scope, scope_id))
+    row = cursor.fetchone()
+    if row:
+        new_bytes = max(0, row[0] + bytes_diff)
+        cursor.execute("UPDATE storage_usage SET bytes_used = %s, updated_at = CURRENT_TIMESTAMP WHERE scope = %s AND scope_id = %s", 
+                       (new_bytes, scope, scope_id))
+    else:
+        new_bytes = max(0, bytes_diff)
+        cursor.execute("INSERT INTO storage_usage (scope, scope_id, bytes_used) VALUES (%s, %s, %s)", 
+                       (scope, scope_id, new_bytes))
+    conn.commit()
+    return new_bytes
+
+def get_storage_usage(scope, scope_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT bytes_used FROM storage_usage WHERE scope = %s AND scope_id = %s", (scope, scope_id))
+    row = cursor.fetchone()
+    return row[0] if row else 0
+
+def log_storage_event(event_id, file_id, action, actor_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    query = """INSERT INTO storage_events (event_id, file_id, action, actor_id) VALUES (%s, %s, %s, %s)"""
+    cursor.execute(query, (event_id, file_id, action, actor_id))
+    conn.commit()
+
+# --- AI ANALYSIS MANAGEMENT ---
+
+def create_ai_analysis(analysis_id, project_id, version=1):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO ai_analysis (analysis_id, project_id, submission_version, status) VALUES (%s, %s, %s, 'PROCESSING')",
+                   (analysis_id, project_id, version))
+    conn.commit()
+    return analysis_id
+
+def update_ai_analysis_status(analysis_id, status):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE ai_analysis SET status = %s, updated_at = CURRENT_TIMESTAMP WHERE analysis_id = %s", (status, analysis_id))
+    conn.commit()
+
+def save_ai_analysis_results(analysis_id, data: dict):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Update main table
+    cursor.execute("""
+        UPDATE ai_analysis 
+        SET overall_confidence = %s, overall_sdg_assessment = %s, environmental_impact = %s, social_impact = %s, economic_impact = %s, status = 'COMPLETED', updated_at = CURRENT_TIMESTAMP
+        WHERE analysis_id = %s
+    """, (
+        data.get("overall_confidence"),
+        data.get("overall_sdg_assessment"),
+        data.get("environmental_impact"),
+        data.get("social_impact"),
+        data.get("economic_impact"),
+        analysis_id
+    ))
+    
+    # Insert mappings
+    for sdg in data.get("sdgs", []):
+        cursor.execute("""
+            INSERT INTO ai_sdg_mappings (analysis_id, sdg_number, sdg_name, classification, target, reasoning, evidence, evidence_strength, confidence)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            analysis_id, sdg.get("sdg_number"), sdg.get("sdg_name"), sdg.get("classification"),
+            sdg.get("target"), sdg.get("reasoning"), sdg.get("evidence"), sdg.get("evidence_strength"), sdg.get("confidence")
+        ))
+        
+    # Insert claims
+    for claim in data.get("claims", []):
+        cursor.execute("""
+            INSERT INTO ai_claims (analysis_id, claim, source, evidence, verification_status)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (analysis_id, claim.get("claim"), claim.get("source"), claim.get("evidence"), claim.get("verification_status")))
+        
+    # Insert recommendations
+    for rec in data.get("recommendations", []):
+        cursor.execute("""
+            INSERT INTO ai_recommendations (analysis_id, recommendation)
+            VALUES (%s, %s)
+        """, (analysis_id, rec))
+        
+    # Insert contradictions
+    for contra in data.get("contradictions", []):
+        cursor.execute("""
+            INSERT INTO ai_contradictions (analysis_id, student_claim, documented_result, measured_result, verification_status, explanation)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (analysis_id, contra.get("student_claim"), contra.get("documented_result"), contra.get("measured_result"), contra.get("verification_status"), contra.get("explanation")))
+        
+    # Insert KPIs
+    for kpi in data.get("kpis", []):
+        cursor.execute("""
+            INSERT INTO ai_kpis (analysis_id, kpi_name, original_value, original_unit, normalized_value, normalized_unit, evidence)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (analysis_id, kpi.get("kpi_name"), kpi.get("original_value"), kpi.get("original_unit"), kpi.get("normalized_value"), kpi.get("normalized_unit"), kpi.get("evidence")))
+        
+    # Insert Government Alignment
+    for gov in data.get("government_alignment", []):
+        cursor.execute("""
+            INSERT INTO ai_government_alignment (analysis_id, government_body, framework_name, indicator, alignment_strength, evidence)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (analysis_id, gov.get("government_body"), gov.get("framework_name"), gov.get("indicator"), gov.get("alignment_strength"), gov.get("evidence")))
+        
+    # Insert External Sources
+    for src in data.get("external_sources", []):
+        cursor.execute("""
+            INSERT INTO ai_sources (analysis_id, source_title, organization, url, publication_date, source_type, authority_level, relevant_claim)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (analysis_id, src.get("source_title"), src.get("organization"), src.get("url"), src.get("publication_date"), src.get("source_type"), src.get("authority_level"), src.get("relevant_claim")))
+        
+    conn.commit()
+
+def get_ai_analysis(project_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    cursor.execute("SELECT * FROM ai_analysis WHERE project_id = %s ORDER BY created_at DESC LIMIT 1", (project_id,))
+    analysis = cursor.fetchone()
+    
+    if not analysis:
+        return None
+        
+    aid = analysis["analysis_id"]
+    
+    cursor.execute("SELECT * FROM ai_sdg_mappings WHERE analysis_id = %s", (aid,))
+    analysis["sdgs"] = cursor.fetchall()
+    
+    cursor.execute("SELECT * FROM ai_claims WHERE analysis_id = %s", (aid,))
+    analysis["claims"] = cursor.fetchall()
+    
+    cursor.execute("SELECT * FROM ai_recommendations WHERE analysis_id = %s", (aid,))
+    analysis["recommendations"] = [r["recommendation"] for r in cursor.fetchall()]
+    
+    cursor.execute("SELECT * FROM ai_contradictions WHERE analysis_id = %s", (aid,))
+    analysis["contradictions"] = cursor.fetchall()
+    
+    cursor.execute("SELECT * FROM ai_kpis WHERE analysis_id = %s", (aid,))
+    analysis["kpis"] = cursor.fetchall()
+    
+    cursor.execute("SELECT * FROM ai_government_alignment WHERE analysis_id = %s", (aid,))
+    analysis["government_alignment"] = cursor.fetchall()
+    
+    cursor.execute("SELECT * FROM ai_sources WHERE analysis_id = %s", (aid,))
+    analysis["external_sources"] = cursor.fetchall()
+    
+    return analysis
+

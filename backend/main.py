@@ -3,7 +3,8 @@ import sys
 import uuid
 import io
 import csv
-from fastapi import FastAPI, HTTPException, UploadFile, File, Response, BackgroundTasks, Depends, Request
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Response, BackgroundTasks, Depends, Request
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import httpx
@@ -27,13 +28,19 @@ os.makedirs(STUDENT_UPLOADS_DIR, exist_ok=True)
 
 from fastapi.responses import FileResponse
 
-from backend.pdf_worker import start_pdf_workers, enqueue_pdf_job, REPORTS_DIR
+from backend.pdf_worker import start_pdf_workers, enqueue_pdf_job
+from backend.storage.service import StorageService
+from backend.storage.config import PARTITIONS, QUOTAS
+from backend.storage.cleanup import start_cleanup_worker
+from backend.ai_engine.worker import start_ai_workers, enqueue_ai_job
 
 app = FastAPI()
 
 @app.on_event("startup")
 async def startup_event():
     await start_pdf_workers(num_workers=2)
+    await start_cleanup_worker()
+    await start_ai_workers(num_workers=1)
 
 # --- Simple In-Memory Rate Limiter ---
 RATE_LIMIT_DURATION = 60 # seconds
@@ -428,32 +435,108 @@ async def delete_suggestion(sug_id: str):
 
 # --- File Upload API ---
 @app.post("/api/upload")
-async def upload_file(file: UploadFile = File(...)):
-    file_path = os.path.join(STUDENT_UPLOADS_DIR, file.filename)
+async def upload_file(
+    file: UploadFile = File(...),
+    owner_id: str = Form("anonymous"),
+    project_id: str = Form(None)
+):
     try:
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-            
-        try:
-            payload = {
-                "project_id": file.filename.split('.')[0],
-                "file_path": file_path
-            }
-            # We don't await this as it is a sync requests.post in original code, but let's fix it:
-            import requests
-            requests.post("http://127.0.0.1:8001/api/ai/process", json=payload, timeout=2)
-            ai_status = "Sent to SDG.AI for indexing"
-        except Exception as e:
-            ai_status = f"SDG.AI Engine offline or failed: {str(e)}"
-            
+        # Use StorageService instead of raw filesystem
+        result = await StorageService.upload_file(file, owner_id, project_id)
+        
+        # Enqueue for AI Analysis if it is a project upload
+        ai_status = "Not sent (SDG.AI only processes project submission data)"
+        if project_id:
+            try:
+                # Create a new analysis record
+                analysis_id = f"ai_job_{uuid.uuid4().hex}"
+                db.create_ai_analysis(analysis_id, project_id, version=1)
+                
+                # Enqueue job
+                await enqueue_ai_job(analysis_id, project_id)
+                ai_status = "Sent to SDG.AI Engine"
+            except Exception as e:
+                ai_status = f"SDG.AI Engine failed to queue: {str(e)}"
+                
         return {
-            "filename": file.filename, 
+            "file_id": result["file_id"],
+            "filename": result["filename"], 
             "status": "Uploaded successfully", 
-            "absolute_path": file_path,
+            "size_bytes": result["size_bytes"],
             "sdg_ai_status": ai_status
         }
+    except HTTPException as he:
+        raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to upload file: {str(e)}")
+
+@app.get("/api/files/{file_id}/download")
+async def download_file(file_id: str):
+    record = db.get_file(file_id)
+    if not record or record["status"] != "ACTIVE":
+        raise HTTPException(status_code=404, detail="File not found")
+        
+    abs_path = StorageService.get_absolute_path(record["storage_key"])
+    if not os.path.exists(abs_path):
+        raise HTTPException(status_code=404, detail="Physical file missing")
+        
+    return FileResponse(
+        path=abs_path, 
+        filename=record["original_filename"],
+        media_type=record["mime_type"]
+    )
+
+# --- SDG.AI API ---
+
+class AIProcessRequest(BaseModel):
+    project_id: str
+
+@app.post("/api/ai/process")
+async def process_ai_project(req: AIProcessRequest):
+    try:
+        analysis_id = f"ai_job_{uuid.uuid4().hex}"
+        db.create_ai_analysis(analysis_id, req.project_id, version=1)
+        await enqueue_ai_job(analysis_id, req.project_id)
+        return {"status": "success", "analysis_id": analysis_id, "message": "Job enqueued"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/ai/status/{project_id}")
+async def get_ai_status(project_id: str):
+    analysis = db.get_ai_analysis(project_id)
+    if not analysis:
+        raise HTTPException(status_code=404, detail="No analysis found")
+    return {"status": analysis["status"]}
+
+@app.get("/api/ai/analysis/{project_id}")
+async def get_ai_analysis_result(project_id: str):
+    analysis = db.get_ai_analysis(project_id)
+    if not analysis:
+        raise HTTPException(status_code=404, detail="No analysis found")
+    return analysis
+
+@app.get("/api/storage/metrics")
+async def get_storage_metrics():
+    conn = db.get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    cursor.execute("SELECT COUNT(*) as cnt, SUM(size_bytes) as total_size FROM files WHERE status = 'ACTIVE'")
+    row = cursor.fetchone()
+    
+    total_files = row["cnt"] or 0
+    total_bytes = row["total_size"] or 0
+    
+    return {
+        "metrics": {
+            "total_files": total_files,
+            "total_bytes": total_bytes,
+            "total_mb": round(total_bytes / (1024*1024), 2),
+            "partitions": {
+                name: path for name, path in PARTITIONS.items()
+            },
+            "quotas": QUOTAS
+        }
+    }
 
 # --- ANALYTICS API ---
 
