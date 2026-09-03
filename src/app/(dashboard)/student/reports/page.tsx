@@ -2,6 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 import { FileText, Download, Clock, CheckCircle2 } from "lucide-react";
+import { PdfGeneratorButton } from "@/components/ui/PdfGeneratorButton";
 import { Button } from "@/components/ui/button";
 
 const mockReports: { id: string, title: string, type: string, date: string, status: string, size: string }[] = [];
@@ -46,13 +47,16 @@ export default function ReportsPage() {
                 <p className="text-xs text-gray-400 font-medium">Size: {report.size}</p>
               </div>
               {report.status === "Ready" ? (
-                <a href="/sample-sdg-report.pdf" download={`${report.title}.pdf`} className="block">
-                  <Button 
-                    className="rounded-full shadow-sm w-10 h-10 p-0 flex items-center justify-center transition-transform bg-blue-600 hover:bg-blue-700 hover:scale-105"
-                  >
-                    <Download size={16} />
-                  </Button>
-                </a>
+                <div className="block">
+                  <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 hover:border-blue-500 hover:shadow-lg transition-all group">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="bg-blue-50 dark:bg-blue-900/30 w-12 h-12 rounded-xl flex items-center justify-center text-blue-600 dark:text-blue-400">
+                        <FileText size={24} />
+                      </div>
+                      <PdfGeneratorButton reportId={report.id} className="text-gray-400 group-hover:text-blue-600 transition-colors p-2" text="" />
+                    </div>
+                  </div>
+                </div>
               ) : (
                 <Button 
                   disabled

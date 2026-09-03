@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { HelpCircle, FileText, Send, Settings, Download } from "lucide-react";
+import { PdfGeneratorButton } from "@/components/ui/PdfGeneratorButton";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 
@@ -406,9 +407,10 @@ function ProjectFormContent() {
                 </div>
               ) : null}
               {submittedProject.reportUrl && (
-                <Button render={<a href={submittedProject.reportUrl as string} download target="_blank" rel="noreferrer" />} className="bg-emerald-600 hover:bg-emerald-700 flex-1 h-12 text-lg font-bold">
-                  <Download className="w-5 h-5 mr-2" /> Download Official PDF Report
-                </Button>
+                <PdfGeneratorButton 
+                  reportId={submittedProject.id} 
+                  className="bg-emerald-600 hover:bg-emerald-700 flex-1 h-12 text-lg font-bold text-white rounded-md"
+                />
               )}
               <Button onClick={() => setSubmittedProject(null)} variant="outline" className="flex-1 h-12 text-lg font-bold">
                 Submit Another Project

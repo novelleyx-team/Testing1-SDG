@@ -25,7 +25,15 @@ STUDENT_UPLOADS_DIR = os.path.join(SANDBOX_DIR, "student_uploads")
 os.makedirs(DATASETS_DIR, exist_ok=True)
 os.makedirs(STUDENT_UPLOADS_DIR, exist_ok=True)
 
+from fastapi.responses import FileResponse
+
+from backend.pdf_worker import start_pdf_workers, enqueue_pdf_job, REPORTS_DIR
+
 app = FastAPI()
+
+@app.on_event("startup")
+async def startup_event():
+    await start_pdf_workers(num_workers=2)
 
 # --- Simple In-Memory Rate Limiter ---
 RATE_LIMIT_DURATION = 60 # seconds
@@ -291,6 +299,74 @@ async def get_report(project_id: str):
         "project": project,
         "student_name": student_name
     }
+
+# --- PDF GENERATION API ---
+
+@app.post("/api/reports/{report_id}/pdf")
+async def request_pdf_generation(report_id: str):
+    report = db.get_report_by_project(report_id)  # Note: The route param implies project_id or report_id, let's assume it's report_id, but the function takes project_id? Wait, in DB, reports table has id and project_id. Let's fetch the report by its ID.
+    
+    conn = db.get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM reports WHERE id = %s", (report_id,))
+    report_record = cursor.fetchone()
+    
+    if not report_record:
+        # Fallback: check if they passed project_id instead
+        cursor.execute("SELECT * FROM reports WHERE project_id = %s ORDER BY created_at DESC LIMIT 1", (report_id,))
+        report_record = cursor.fetchone()
+        if not report_record:
+            raise HTTPException(status_code=404, detail="Report not found")
+            
+    actual_report_id = report_record["id"]
+    project_id = report_record["project_id"]
+    
+    job_id = f"pdfjob-{uuid.uuid4().hex[:8]}"
+    db.create_pdf_job(job_id, actual_report_id, project_id)
+    
+    await enqueue_pdf_job(job_id, actual_report_id, project_id)
+    
+    return {"job_id": job_id, "report_id": actual_report_id, "status": "QUEUED"}
+
+@app.get("/api/reports/{report_id}/pdf/status")
+async def get_pdf_status(report_id: str, job_id: str = None):
+    # If job_id is provided, check that job. Otherwise get latest job for report_id
+    conn = db.get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    if job_id:
+        cursor.execute("SELECT * FROM pdf_jobs WHERE id = %s", (job_id,))
+    else:
+        cursor.execute("SELECT * FROM pdf_jobs WHERE report_id = %s ORDER BY created_at DESC LIMIT 1", (report_id,))
+        
+    job = cursor.fetchone()
+    if not job:
+        raise HTTPException(status_code=404, detail="PDF job not found")
+        
+    return {
+        "job_id": job["id"],
+        "status": job["status"],
+        "error": job.get("error")
+    }
+
+@app.get("/api/reports/{report_id}/pdf/download")
+async def download_pdf(report_id: str):
+    conn = db.get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM pdf_jobs WHERE report_id = %s AND status = 'COMPLETED' ORDER BY created_at DESC LIMIT 1", (report_id,))
+    job = cursor.fetchone()
+    
+    if not job or not job.get("storage_location"):
+        raise HTTPException(status_code=404, detail="PDF not generated yet or not found")
+        
+    file_path = job["storage_location"]
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="PDF file missing from disk")
+        
+    return FileResponse(
+        path=file_path, 
+        filename=f"SDG_Report_{report_id}.pdf", 
+        media_type="application/pdf"
+    )
 
 # --- Suggestions API ---
 class SuggestionCreate(BaseModel):

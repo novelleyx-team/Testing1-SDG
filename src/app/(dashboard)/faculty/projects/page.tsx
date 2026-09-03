@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { useAuthStore } from "@/store/auth-store"
 import { useProjectsStore } from "@/store/projects-store"
 import { FolderOpen, Eye, Download } from "lucide-react"
+import { PdfGeneratorButton } from "@/components/ui/PdfGeneratorButton"
 import { StatusBadge } from "@/components/shared/status-badge"
 
 import Image from "next/image"
@@ -109,9 +110,11 @@ export default function ProjectsPage() {
 
                             {project.reportUrl && (
                               <div className="flex justify-end pt-4 border-t border-gray-100">
-                                <Button render={<a href={project.reportUrl} download target="_blank" rel="noreferrer" />} className="bg-blue-600 hover:bg-blue-700">
-                                  <Download className="w-4 h-4 mr-2" /> Download Full PDF Report
-                                </Button>
+                                <PdfGeneratorButton 
+                                  reportId={project.id} 
+                                  className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md text-white text-sm"
+                                  text="Download Full PDF Report"
+                                />
                               </div>
                             )}
                           </div>

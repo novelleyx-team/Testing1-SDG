@@ -2,6 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Plus, Search, Filter, MoreVertical, ExternalLink, Download, Eye } from "lucide-react";
+import { PdfGeneratorButton } from "@/components/ui/PdfGeneratorButton";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -125,11 +126,11 @@ export default function ProjectsPage() {
                               <Eye size={16} />
                             </button>
                           </Link>
-                          <a href="/sample-sdg-report.pdf" download={`${project.title.replace(/\s+/g, '_')}_Report.pdf`}>
-                            <button className="p-2 text-blue-600 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg transition-colors flex items-center gap-1" title="Download PDF Report">
-                              <Download size={16} />
-                            </button>
-                          </a>
+                          <PdfGeneratorButton 
+                            reportId={project.id} 
+                            className="p-2 text-blue-600 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg transition-colors" 
+                            text="" 
+                          />
                         </>
                       )}
                       <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors">

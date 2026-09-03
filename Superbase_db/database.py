@@ -117,6 +117,20 @@ def _init_db(conn):
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )''')
     
+    conn.execute('''
+    CREATE TABLE IF NOT EXISTS pdf_jobs (
+        id TEXT PRIMARY KEY,
+        report_id TEXT,
+        project_id TEXT,
+        version TEXT,
+        model_version TEXT,
+        status TEXT,
+        storage_location TEXT,
+        error TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )''')
+    
     # Seed Departments
     official_deps = [
         "Computer Science", 
@@ -333,6 +347,50 @@ def get_report_by_project(project_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM reports WHERE project_id = %s ORDER BY created_at DESC LIMIT 1", (project_id,))
+    return cursor.fetchone()
+
+# --- PDF JOBS (NEW) ---
+
+def create_pdf_job(job_id, report_id, project_id, version="1.0", model_version="1.0"):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    query = """INSERT INTO pdf_jobs (id, report_id, project_id, version, model_version, status) 
+               VALUES (%s, %s, %s, %s, %s, 'QUEUED')"""
+    cursor.execute(query, (job_id, report_id, project_id, version, model_version))
+    conn.commit()
+    return job_id
+
+def update_pdf_job(job_id, status=None, storage_location=None, error=None):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    updates = []
+    params = []
+    if status is not None:
+        updates.append("status = %s")
+        params.append(status)
+    if storage_location is not None:
+        updates.append("storage_location = %s")
+        params.append(storage_location)
+    if error is not None:
+        updates.append("error = %s")
+        params.append(error)
+        
+    if not updates:
+        return
+        
+    updates.append("updated_at = CURRENT_TIMESTAMP")
+    
+    query = f"UPDATE pdf_jobs SET {', '.join(updates)} WHERE id = %s"
+    params.append(job_id)
+    
+    cursor.execute(query, tuple(params))
+    conn.commit()
+
+def get_pdf_job(job_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM pdf_jobs WHERE id = %s", (job_id,))
     return cursor.fetchone()
 
 # --- ANALYTICS ---

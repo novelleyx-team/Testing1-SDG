@@ -1,9 +1,5 @@
 import { analyzeProject, ProjectData } from "../ai/analyzer";
-import { ReportTemplate } from "./templates/ReportTemplate";
-import { generatePdfFromHtml } from "./pdf_renderer";
 import { uploadReportToStorage, updateReportStatus } from "./storage";
-import { renderToStaticMarkup } from "react-dom/server";
-import React from 'react';
 
 export async function processReportGeneration(
   projectId: string, 
@@ -19,22 +15,12 @@ export async function processReportGeneration(
     const reportJson = await analyzeProject(projectData);
     reportJson.report_version = reportVersion;
     
-    // 3. Update status to 'generating_pdf'
-    await updateReportStatus(reportId, 'generating_pdf', undefined, reportJson.scores);
+    // 3. Complete Process
+    // Instead of generating the PDF now, we just save the AI report data.
+    // The PDF will be generated asynchronously when the user clicks "Download PDF".
+    await updateReportStatus(reportId, 'completed', undefined, reportJson.scores);
 
-    // 4. Render React Template to HTML
-    const htmlString = renderToStaticMarkup(React.createElement(ReportTemplate, { report: reportJson }));
-
-    // 5. Generate PDF
-    const pdfBuffer = await generatePdfFromHtml(htmlString);
-
-    // 6. Upload PDF to Storage
-    const pdfUrl = await uploadReportToStorage(projectId, reportId, pdfBuffer);
-
-    // 7. Complete Process
-    await updateReportStatus(reportId, 'completed', pdfUrl);
-
-    console.log(`Report generation completed for ${reportId}. URL: ${pdfUrl}`);
+    console.log(`Report generation completed for ${reportId}. Data saved.`);
   } catch (error: unknown) {
     console.error(`Report generation failed for ${reportId}:`, error);
     await updateReportStatus(reportId, 'failed');
