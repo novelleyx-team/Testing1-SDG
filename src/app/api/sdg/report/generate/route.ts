@@ -52,10 +52,10 @@ export async function POST(req: Request) {
       report_version
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to initiate report generation:', error);
     return NextResponse.json(
-      { error: 'Internal Server Error', message: error.message },
+      { error: 'Internal Server Error', message: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }

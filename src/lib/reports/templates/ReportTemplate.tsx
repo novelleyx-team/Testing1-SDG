@@ -1,15 +1,16 @@
 import React from 'react';
 import { AIReport } from '../../ai/schema';
 
+import Head from 'next/head';
+
 export const ReportTemplate = ({ report }: { report: AIReport }) => {
   return (
     <html lang="en">
-      <head>
+      <Head>
         <meta charSet="UTF-8" />
         <title>{report.project.title} - SDG Impact Report</title>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
         {/* We will inject Tailwind and custom print CSS here during the render step */}
-      </head>
+      </Head>
       <body className="bg-white text-gray-900 font-sans antialiased">
         
         {/* Cover Page */}
@@ -249,7 +250,7 @@ const ScoreCard = ({ title, score }: { title: string, score: number }) => (
   </div>
 );
 
-const ImpactSection = ({ title, data, colorClass, bgClass, borderClass }: { title: string, data: any, colorClass: string, bgClass: string, borderClass: string }) => (
+const ImpactSection = ({ title, data, colorClass, bgClass, borderClass }: { title: string, data: { score: number, type: string, analysis: string, key_factors: string[] }, colorClass: string, bgClass: string, borderClass: string }) => (
   <div className={`border ${borderClass} rounded-xl p-6 keep-together bg-white relative overflow-hidden`}>
     <div className={`absolute top-0 right-0 w-32 h-32 -mr-10 -mt-10 rounded-full ${bgClass} opacity-50`}></div>
     

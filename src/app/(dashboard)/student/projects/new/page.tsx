@@ -231,20 +231,49 @@ function ProjectFormContent() {
         })
       });
       
-      setSimulationPhase(3);
-      const data = await response.json();
+      const initData = await response.json();
+      if (!response.ok) throw new Error(initData.detail || initData.message || "Failed to queue job");
       
-      if (!response.ok) {
-        throw new Error(data.detail || data.message || "Failed to generate report");
+      const jobId = initData.job_id;
+      let jobCompleted = false;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let finalResult: any = null;
+      
+      setSimulationPhase(1);
+      
+      while (!jobCompleted) {
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Poll every 2 seconds
+        
+        const jobRes = await fetch(`/api/jobs/${jobId}`);
+        const jobData = await jobRes.json();
+        
+        if (!jobRes.ok) throw new Error(jobData.detail || "Failed to poll job");
+        
+        if (jobData.stage) {
+            // Keep the cool animations syncing with the backend's actual progress
+            if (jobData.stage.includes("Global Target Analysis")) setSimulationPhase(2);
+            else if (jobData.stage.includes("Formatting AI Knowledge")) setSimulationPhase(3);
+            else if (jobData.stage.includes("Finalizing Report")) setSimulationPhase(4);
+        }
+        
+        if (jobData.status === "COMPLETED") {
+            jobCompleted = true;
+            finalResult = jobData.result;
+        } else if (jobData.status === "FAILED") {
+            throw new Error(jobData.error || "Job failed");
+        }
       }
       
-      setSimulationPhase(4);
+      const data = finalResult;
       
       let maxScore = 0;
-      if (data.sdg_scores) {
+      if (data.sdg_scores && data.sdg_scores["SDG Score"]) {
+        maxScore = data.sdg_scores["SDG Score"];
+      } else if (data.sdg_scores) {
         maxScore = Math.max(...(Object.values(data.sdg_scores) as number[]));
       }
-      const aiScoreStr = maxScore > 0 ? `${Math.round(maxScore * 10)}/100` : (data.is_sdg ? "85/100" : "N/A");
+      
+      const aiScoreStr = maxScore > 0 ? `${maxScore}/100` : (data.is_sdg ? "85/100" : "N/A");
 
       if (notifyFaculty) {
         setSimulationPhase(5);
@@ -284,7 +313,7 @@ function ProjectFormContent() {
       console.error(err);
       setIsSubmitting(false);
       setSimulationPhase(0);
-      showNotification("Submission Failed", "There was an error communicating with the AI backend.", "error");
+      showNotification("Submission Failed", err instanceof Error ? err.message : "There was an error communicating with the AI backend.", "error");
     }
   };
 

@@ -28,7 +28,7 @@ export async function GET(
 
     return NextResponse.json(data);
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to fetch report status:', error);
     return NextResponse.json(
       { error: 'Internal Server Error' },

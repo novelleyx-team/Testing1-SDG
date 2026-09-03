@@ -15,7 +15,7 @@ export async function generatePdfFromHtml(htmlContent: string): Promise<Buffer> 
   let customCss = '';
   try {
     customCss = fs.readFileSync(cssPath, 'utf8');
-  } catch (err) {
+  } catch {
     console.warn("Could not load print.css, proceeding without it.");
   }
 
@@ -28,7 +28,7 @@ export async function generatePdfFromHtml(htmlContent: string): Promise<Buffer> 
     <style>${customCss}</style>
   `;
 
-  await page.setContent(completeHtml, { waitUntil: 'networkidle0' });
+  await page.setContent(completeHtml, { waitUntil: 'load' });
 
   const pdfBuffer = await page.pdf({
     format: 'A4',

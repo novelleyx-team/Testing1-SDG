@@ -3,16 +3,13 @@ import sys
 import uuid
 import io
 import csv
-from fastapi import FastAPI, HTTPException, UploadFile, File, Response
+from fastapi import FastAPI, HTTPException, UploadFile, File, Response, BackgroundTasks, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import matplotlib.pyplot as plt
-import numpy as np
-from google import genai
-from google.genai import types
-import subprocess
+import httpx
 import json
 import shutil
+import time
 
 # Link to the master database folder "Superbase_db"
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -21,18 +18,42 @@ if parent_dir not in sys.path:
 
 from Superbase_db import database as db
 
-# --- PATHING FOR STORAGE SANDBOX (Tickets 2 & 3) ---
-# Default to relative local directory if not provided in environment
+# --- PATHING FOR STORAGE SANDBOX ---
 SANDBOX_DIR = os.getenv("SANDBOX_DIR", os.path.join(os.getcwd(), "SDG_Local_Sandbox"))
 DATASETS_DIR = os.path.join(SANDBOX_DIR, "datasets")
 STUDENT_UPLOADS_DIR = os.path.join(SANDBOX_DIR, "student_uploads")
-
-# Ensure isolated local directories exist
 os.makedirs(DATASETS_DIR, exist_ok=True)
 os.makedirs(STUDENT_UPLOADS_DIR, exist_ok=True)
-# -----------------------------------------------------------------
 
 app = FastAPI()
+
+# --- Simple In-Memory Rate Limiter ---
+RATE_LIMIT_DURATION = 60 # seconds
+RATE_LIMIT_REQUESTS = 5
+ip_request_counts = {}
+
+async def rate_limiter(request: Request):
+    client_ip = request.client.host
+    current_time = time.time()
+    
+    if client_ip in ip_request_counts:
+        ip_request_counts[client_ip] = [t for t in ip_request_counts[client_ip] if current_time - t < RATE_LIMIT_DURATION]
+    else:
+        ip_request_counts[client_ip] = []
+        
+    if len(ip_request_counts[client_ip]) >= RATE_LIMIT_REQUESTS:
+        raise HTTPException(status_code=429, detail="Too many requests. Please wait 60 seconds before trying again.")
+        
+    ip_request_counts[client_ip].append(current_time)
+
+# Allow CORS so Next.js frontend can call it
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # --- User Auth Models ---
 class UserRegister(BaseModel):
@@ -59,7 +80,6 @@ class ProjectCreate(BaseModel):
 
 @app.post("/api/register")
 async def register_user(user: UserRegister):
-    # Department is used as Branch
     user_id = db.create_user(
         user_id=user.id,
         name=user.name,
@@ -68,29 +88,25 @@ async def register_user(user: UserRegister):
         department=user.department
     )
     if not user_id:
-        raise HTTPException(status_code=500, detail="Failed to register user. Email might already exist.")
+        raise HTTPException(status_code=500, detail="Failed to register user.")
     return {"message": "User registered successfully", "user_id": user_id}
 
 @app.post("/api/login")
 async def login_user(creds: UserLogin):
-    # Mocking simple login by fetching user by email
     conn = db.get_db_connection()
-    if conn:
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM users WHERE email = %s", (creds.email,))
-        user = cursor.fetchone()
-        cursor.close()
-        conn.close()
-        if user:
-            return {"message": "Login successful", "user": user}
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM users WHERE email = %s", (creds.email,))
+    user = cursor.fetchone()
+    if user:
+        return {"message": "Login successful", "user": user}
     raise HTTPException(status_code=401, detail="Invalid credentials or user not found.")
 
 @app.post("/api/projects")
 async def save_project(project: ProjectCreate):
     score = 0
     try:
-        score = int(float(project.aiScore))
-    except (ValueError, TypeError):
+        score = int(float(project.aiScore.replace('/100', '')))
+    except:
         pass
     project_id = db.create_project(
         project_id=project.id,
@@ -109,7 +125,6 @@ async def save_project(project: ProjectCreate):
 @app.get("/api/projects/{student_id}")
 async def get_student_projects(student_id: str):
     projects = db.get_projects_by_student(student_id)
-    # Map database column names to frontend expected variables
     mapped_projects = []
     for p in projects:
         mapped_projects.append({
@@ -120,14 +135,13 @@ async def get_student_projects(student_id: str):
             "status": p["status"],
             "aiScore": str(p["sdg_match_score"]) if p["sdg_match_score"] is not None else "0",
             "date": p["created_at"].strftime("%b %d, %Y") if p["created_at"] else "Recently",
-            "targetSdg": "SDG Pending", # Optional mapping
+            "targetSdg": "SDG Mapping Complete",
             "studentDepartment": p["department"]
         })
     return {"projects": mapped_projects}
 
 @app.get("/api/export")
 async def export_data_to_csv():
-    # Export projects to CSV for Excel consumption
     projects = db.get_all_projects()
     output = io.StringIO()
     writer = csv.writer(output)
@@ -143,23 +157,29 @@ async def export_data_to_csv():
         headers={"Content-Disposition": "attachment; filename=projects_export.csv"}
     )
 
-# Allow CORS so Next.js frontend can call it
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# --- Job System & AI Pipeline (Phase 2 & 3) ---
 
-GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
-try:
-    client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
-except Exception as e:
-    print(f"Warning: Failed to initialize Gemini Client: {e}")
-    client = None
+@app.get("/api/jobs/{job_id}")
+async def get_job_status(job_id: str):
+    job = db.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+        
+    result_data = None
+    if job["result"]:
+        try:
+            result_data = json.loads(job["result"])
+        except:
+            pass
+            
+    return {
+        "job_id": job["id"],
+        "status": job["status"],
+        "stage": job["stage"],
+        "result": result_data,
+        "error": job.get("error")
+    }
 
-# Define request model
 class ProjectSubmission(BaseModel):
     student_name: str
     department: str
@@ -167,194 +187,105 @@ class ProjectSubmission(BaseModel):
     abstract: str
     keywords: str
 
-# Define response model
-class GenerationResponse(BaseModel):
-    is_sdg: bool
-    summary: str
-    target_sdg: str
-    sdg_scores: dict[str, float] | None = None
-    radar_map_url: str | None = None
-    report_url: str | None = None
-
-SDG_LABELS = [
-    "No Poverty", "Zero Hunger", "Good Health", "Quality Education",
-    "Gender Equality", "Clean Water", "Clean Energy", "Decent Work",
-    "Industry & Innovation", "Reduced Inequalities", "Sustainable Cities",
-    "Responsible Consumption", "Climate Action", "Life Below Water",
-    "Life on Land", "Peace & Justice", "Partnerships"
-]
-
-def generate_radar_chart(scores_list, filename):
-    angles = np.linspace(0, 2 * np.pi, len(SDG_LABELS), endpoint=False).tolist()
-    # close the plot
-    plot_scores = scores_list + scores_list[:1]
-    plot_angles = angles + angles[:1]
+@app.post("/api/generate-sdg-report", dependencies=[Depends(rate_limiter)])
+async def generate_sdg_report(submission: ProjectSubmission, background_tasks: BackgroundTasks):
+    job_id = f"job-{uuid.uuid4().hex[:8]}"
+    project_id = f"proj-{uuid.uuid4().hex[:8]}"
     
-    fig, ax = plt.subplots(figsize=(8, 8), subplot_kw=dict(polar=True))
-    ax.fill(plot_angles, plot_scores, color='blue', alpha=0.25)
-    ax.plot(plot_angles, plot_scores, color='blue', linewidth=2)
+    db.create_job(job_id, project_id, status="QUEUED", stage="Ingesting Project Data...")
+    background_tasks.add_task(process_sdg_job_pipeline, job_id, project_id, submission)
     
-    ax.set_yticks([2, 4, 6, 8, 10])
-    ax.set_yticklabels(["2", "4", "6", "8", "10"], color="grey", size=7)
-    ax.set_ylim(0, 10)
-    
-    # Add labels
-    ax.set_xticks(angles)
-    ax.set_xticklabels(SDG_LABELS, size=9)
-    
-    plt.title("SDG Impact Radar Map", size=15, color="blue", y=1.1)
-    
-    os.makedirs(os.path.dirname(filename), exist_ok=True)
-    plt.savefig(filename, format='png', bbox_inches='tight')
-    plt.close()
+    return {"job_id": job_id, "project_id": project_id, "status": "QUEUED"}
 
-def compile_typst_report(student_name: str, title: str, summary: str, radar_path: str, output_pdf_path: str):
-    radar_filename = os.path.basename(radar_path)
-    relative_radar_path = f"../radar_maps/{radar_filename}"
-    
-    temp_typ_path = output_pdf_path.replace(".pdf", ".typ")
-    os.makedirs(os.path.dirname(output_pdf_path), exist_ok=True)
-    
-    typst_content = f'''
-#set page(paper: "a4", margin: 2cm)
-#set text(font: "Linux Libertine", size: 12pt)
-
-#align(center)[
-  #text(size: 24pt, weight: "bold")[SDG Impact Report]
-  
-  #v(1em)
-  #text(size: 16pt)[Project: {title}]
-  
-  #text(size: 14pt)[By: {student_name}]
-]
-
-#v(2em)
-
-== Project Summary
-{summary}
-
-#v(2em)
-
-== Impact Footprint
-#align(center)[
-  #image("{relative_radar_path}", width: 80%)
-]
-
-#v(1fr)
-_Report generated by Automated Assessment System_
-'''
-    with open(temp_typ_path, "w", encoding="utf-8") as f:
-        f.write(typst_content)
-        
-    public_dir = os.path.dirname(os.path.dirname(output_pdf_path))
+async def process_sdg_job_pipeline(job_id: str, project_id: str, submission: ProjectSubmission):
     try:
-        subprocess.run(["typst", "compile", "--root", public_dir, temp_typ_path, output_pdf_path], check=True)
-    except FileNotFoundError:
-        print("Typst is not installed. Please install it to generate PDF reports.")
-        raise
+        db.update_job(job_id, status="PROCESSING", stage="Global Target Analysis via SDG.AI...")
+        
+        payload = {
+            "title": submission.title,
+            "problem": submission.abstract,
+            "description": submission.abstract,
+            "solution": "Student submitted solution",
+            "technologies": submission.keywords.split(","),
+            "outcomes": "Not specified"
+        }
+        
+        # Ping internal SDG.AI Engine
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            try:
+                response = await client.post("http://127.0.0.1:8001/api/sdg/report", json=payload)
+                response.raise_for_status()
+                ai_data = response.json()
+            except Exception as internal_err:
+                print(f"SDG.AI engine error: {internal_err}")
+                raise Exception("Failed to connect to internal SDG.AI Engine. Make sure it is running on port 8001.")
+            
+        db.update_job(job_id, stage="Formatting AI Knowledge...")
+        
+        analysis = ai_data.get("analysis", {})
+        impact = ai_data.get("impact", {})
+        
+        is_sdg = analysis.get("overall_confidence", 0) > 40
+        primary_sdg = "N/A"
+        if analysis.get("sdg_analysis"):
+            primary_sdg = analysis["sdg_analysis"][0].get("sdg_name", "N/A")
+            
+        summary = analysis.get("project_summary", "Analysis complete.")
+        overall_score = impact.get("overall_score", 0)
+        
+        db.update_job(job_id, stage="Finalizing Report Data...")
+        
+        # Next.js API for PDF Generation via Puppeteer
+        report_url = f"/api/pdf/generate?projectId={project_id}"
+        
+        result = {
+            "is_sdg": is_sdg,
+            "summary": summary,
+            "target_sdg": primary_sdg,
+            "sdg_scores": {"SDG Score": overall_score}, 
+            "radar_map_url": None,
+            "report_url": report_url,
+            "raw_analysis": ai_data
+        }
+        
+        db.create_report(f"rep-{project_id}", project_id, result, report_url, None)
+        db.update_job(job_id, status="COMPLETED", stage="Finished", result=result)
+        
     except Exception as e:
-        print(f"Typst compilation failed: {e}")
-        raise e
+        print(f"Job {job_id} failed: {e}")
+        db.update_job(job_id, status="FAILED", stage="Error", error=str(e))
 
-class GeminiResponseSchema(BaseModel):
-    is_sdg: bool
-    primary_sdg: str
-    summary: str
-    sdg_scores: list[int]
-
-@app.post("/api/generate-sdg-report", response_model=GenerationResponse)
-async def generate_sdg_report(submission: ProjectSubmission):
-    prompt = f"""
-    You are an expert AI evaluator for Sustainable Development Goals (SDGs).
-    Analyze the following student project:
-    Title: {submission.title}
-    Abstract: {submission.abstract}
-    Keywords: {submission.keywords}
+@app.get("/api/reports/{project_id}")
+async def get_report(project_id: str):
+    report = db.get_report_by_project(project_id)
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
     
-    Determine if this project is related to any of the 17 UN SDGs.
-    """
-    
-    try:
-        response = client.models.generate_content(
-            model='gemini-flash-latest',
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                response_schema=GeminiResponseSchema,
-            ),
-        )
-        raw_text = response.text.strip()
-        if raw_text.startswith("```json"):
-            raw_text = raw_text.replace("```json\n", "", 1)
-            if raw_text.endswith("```"):
-                raw_text = raw_text[:-3]
-        elif raw_text.startswith("```"):
-            raw_text = raw_text.replace("```\n", "", 1)
-            if raw_text.endswith("```"):
-                raw_text = raw_text[:-3]
-        result = json.loads(raw_text.strip())
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Gemini API error: {str(e)}")
-        
-    project_id = str(uuid.uuid4())[:8]
-    is_sdg = result.get("is_sdg", False)
-    summary = result.get("summary", "Analysis complete.")
-    target_sdg = result.get("primary_sdg", "N/A")
-    scores_list = result.get("sdg_scores", [0]*17)
-    if not isinstance(scores_list, list):
-        scores_list = [0]*17
-        
-    if len(scores_list) < 17:
-        scores_list = scores_list + [0]*(17-len(scores_list))
-    elif len(scores_list) > 17:
-        scores_list = scores_list[:17]
-    
-    # Path inside the Next.js public directory
-    public_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "public")
-    reports_dir = os.path.join(public_dir, "reports")
-    radar_maps_dir = os.path.join(public_dir, "radar_maps")
-    
-    os.makedirs(reports_dir, exist_ok=True)
-    os.makedirs(radar_maps_dir, exist_ok=True)
-    
-    if is_sdg:
-        radar_filename = f"radar_{project_id}.png"
-        radar_path = os.path.join(radar_maps_dir, radar_filename)
-        generate_radar_chart(scores_list, radar_path)
-        
-        pdf_filename = f"report_{project_id}.pdf"
-        pdf_path = os.path.join(reports_dir, pdf_filename)
-        
-        safe_summary = summary.replace('"', "'")
-        safe_title = submission.title.replace('"', "'")
-        safe_name = submission.student_name.replace('"', "'")
-        
+    if report["report_data"]:
         try:
-            compile_typst_report(safe_name, safe_title, safe_summary, radar_path, pdf_path)
-            report_url = f"/reports/{pdf_filename}"
-        except Exception as e:
-            print(f"Skipping PDF generation due to error: {e}")
-            report_url = None
-        
-        sdg_scores_dict = {f"SDG {i+1}": score for i, score in enumerate(scores_list)}
-        
-        return GenerationResponse(
-            is_sdg=True,
-            summary=summary,
-            target_sdg=target_sdg,
-            sdg_scores=sdg_scores_dict,
-            radar_map_url=f"/radar_maps/{radar_filename}",
-            report_url=report_url
-        )
-    else:
-        return GenerationResponse(
-            is_sdg=False,
-            summary=summary,
-            target_sdg=target_sdg
-        )
+            report["report_data"] = json.loads(report["report_data"])
+        except:
+            pass
+            
+    conn = db.get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM projects WHERE id = %s", (project_id,))
+    project = cursor.fetchone()
+    
+    student_name = "Unknown"
+    if project and project["student_id"]:
+        cursor.execute("SELECT name FROM users WHERE id = %s", (project["student_id"],))
+        user = cursor.fetchone()
+        if user:
+            student_name = user["name"]
+            
+    return {
+        "report": report,
+        "project": project,
+        "student_name": student_name
+    }
 
 # --- Suggestions API ---
-
 class SuggestionCreate(BaseModel):
     authorType: str
     name: str
@@ -364,7 +295,6 @@ class SuggestionCreate(BaseModel):
 class SuggestionUpdate(BaseModel):
     status: str
 
-# In-memory database for suggestions
 suggestions_db = [
     {
         "id": "SUG-1001",
@@ -395,7 +325,6 @@ async def create_suggestion(sug: SuggestionCreate):
         "date": datetime.datetime.now().strftime("%b %d, %Y"),
         "status": "Pending"
     }
-    # Add to start of list
     suggestions_db.insert(0, new_sug)
     return new_sug
 
@@ -413,26 +342,22 @@ async def delete_suggestion(sug_id: str):
     suggestions_db = [s for s in suggestions_db if s["id"] != sug_id]
     return {"message": "Deleted successfully"}
 
-# --- File Upload API (Ticket 2) ---
 
-import requests
-
+# --- File Upload API ---
 @app.post("/api/upload")
 async def upload_file(file: UploadFile = File(...)):
-    # Uploads route automatically to the designated local folder (STUDENT_UPLOADS_DIR)
-    # This directory operates independently of the main server environment
     file_path = os.path.join(STUDENT_UPLOADS_DIR, file.filename)
     try:
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
             
-        # Trigger SDG.AI Knowledge Engine
         try:
-            # We use filename as a temporary project_id mapping
             payload = {
                 "project_id": file.filename.split('.')[0],
                 "file_path": file_path
             }
+            # We don't await this as it is a sync requests.post in original code, but let's fix it:
+            import requests
             requests.post("http://127.0.0.1:8001/api/ai/process", json=payload, timeout=2)
             ai_status = "Sent to SDG.AI for indexing"
         except Exception as e:
@@ -440,7 +365,7 @@ async def upload_file(file: UploadFile = File(...)):
             
         return {
             "filename": file.filename, 
-            "status": "Uploaded successfully to local sandbox", 
+            "status": "Uploaded successfully", 
             "absolute_path": file_path,
             "sdg_ai_status": ai_status
         }

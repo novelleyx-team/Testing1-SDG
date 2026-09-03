@@ -35,7 +35,7 @@ export async function processReportGeneration(
     await updateReportStatus(reportId, 'completed', pdfUrl);
 
     console.log(`Report generation completed for ${reportId}. URL: ${pdfUrl}`);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`Report generation failed for ${reportId}:`, error);
     await updateReportStatus(reportId, 'failed');
   }

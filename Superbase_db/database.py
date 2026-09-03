@@ -1,6 +1,8 @@
 import sqlite3
 import os
 import datetime
+import threading
+import json
 
 class MockCursor:
     def __init__(self, conn, dictionary=False):
@@ -11,6 +13,7 @@ class MockCursor:
     def execute(self, query, params=()):
         q = query.replace('%s', '?')
         self.cursor.execute(q, params)
+        return self
         
     def fetchone(self):
         row = self.cursor.fetchone()
@@ -34,72 +37,100 @@ class MockCursor:
     def lastrowid(self):
         return self.cursor.lastrowid
 
-class MockConnection:
-    def __init__(self, db_path):
-        self.conn = sqlite3.connect(db_path, check_same_thread=False)
-        self._init_db()
-        
-    def _init_db(self):
-        self.conn.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id TEXT PRIMARY KEY,
-            name TEXT,
-            email TEXT,
-            role TEXT,
-            avatar TEXT,
-            college_id TEXT,
-            department TEXT
-        )''')
-        self.conn.execute('''
-        CREATE TABLE IF NOT EXISTS projects (
-            id TEXT PRIMARY KEY,
-            student_id TEXT,
-            title TEXT,
-            abstract TEXT,
-            status TEXT,
-            faculty_id TEXT,
-            department TEXT,
-            sdg_match_score INTEGER,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )''')
-        self.conn.execute('''
-        CREATE TABLE IF NOT EXISTS departments (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT
-        )''')
-        self.conn.commit()
-
-    def cursor(self, dictionary=False):
-        return MockCursor(self.conn, dictionary)
-        
-    def commit(self):
-        self.conn.commit()
-        
-    def close(self):
-        self.conn.close()
-
 DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sqlite.db")
+
+# Thread-local storage for SQLite connections
+_local = threading.local()
+
 def get_db_connection():
-    return MockConnection(DB_FILE)
+    if not hasattr(_local, "conn"):
+        # Enable WAL for high concurrency
+        conn = sqlite3.connect(DB_FILE, check_same_thread=False, timeout=15.0)
+        conn.execute("PRAGMA journal_mode=WAL;")
+        conn.execute("PRAGMA synchronous=NORMAL;")
+        _local.conn = conn
+        _init_db(conn)
+    
+    # Return a wrapper to match the expected interface
+    class ConnWrapper:
+        def __init__(self, c):
+            self.conn = c
+        def cursor(self, dictionary=False):
+            return MockCursor(self.conn, dictionary)
+        def commit(self):
+            self.conn.commit()
+        def close(self):
+            pass # Keep thread-local connection open
+    return ConnWrapper(_local.conn)
+
+def _init_db(conn):
+    conn.execute('''
+    CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        name TEXT,
+        email TEXT,
+        role TEXT,
+        avatar TEXT,
+        college_id TEXT,
+        department TEXT
+    )''')
+    conn.execute('''
+    CREATE TABLE IF NOT EXISTS projects (
+        id TEXT PRIMARY KEY,
+        student_id TEXT,
+        title TEXT,
+        abstract TEXT,
+        status TEXT,
+        faculty_id TEXT,
+        department TEXT,
+        sdg_match_score INTEGER,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )''')
+    conn.execute('''
+    CREATE TABLE IF NOT EXISTS departments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT
+    )''')
+    
+    # NEW TABLES FOR SCALABILITY
+    conn.execute('''
+    CREATE TABLE IF NOT EXISTS jobs (
+        id TEXT PRIMARY KEY,
+        project_id TEXT,
+        status TEXT,
+        stage TEXT,
+        result TEXT,
+        error TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )''')
+    
+    conn.execute('''
+    CREATE TABLE IF NOT EXISTS reports (
+        id TEXT PRIMARY KEY,
+        project_id TEXT,
+        report_data TEXT,
+        pdf_url TEXT,
+        radar_url TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )''')
+    conn.commit()
+
+
+# --- USERS & DEPARTMENTS ---
 
 def create_department(name: str):
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("INSERT INTO departments (name) VALUES (%s)", (name,))
     conn.commit()
-    rowid = cursor.lastrowid
-    cursor.close()
-    conn.close()
-    return rowid
+    return cursor.lastrowid
 
 def get_departments():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM departments")
-    res = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return res
+    return cursor.fetchall()
 
 def create_user(user_id, name, email, role, avatar=None, college_id=None, department=None):
     conn = get_db_connection()
@@ -108,18 +139,15 @@ def create_user(user_id, name, email, role, avatar=None, college_id=None, depart
                VALUES (%s, %s, %s, %s, %s, %s, %s)"""
     cursor.execute(query, (user_id, name, email, role, avatar, college_id, department))
     conn.commit()
-    cursor.close()
-    conn.close()
     return user_id
 
 def get_user(user_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
-    res = cursor.fetchone()
-    cursor.close()
-    conn.close()
-    return res
+    return cursor.fetchone()
+
+# --- PROJECTS ---
 
 def create_project(project_id, student_id, title, abstract, status, faculty_id, department, sdg_match_score):
     conn = get_db_connection()
@@ -128,8 +156,6 @@ def create_project(project_id, student_id, title, abstract, status, faculty_id, 
                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"""
     cursor.execute(query, (project_id, student_id, title, abstract, status, faculty_id, department, sdg_match_score))
     conn.commit()
-    cursor.close()
-    conn.close()
     return project_id
 
 def get_projects_by_student(student_id):
@@ -143,8 +169,6 @@ def get_projects_by_student(student_id):
                 r['created_at'] = datetime.datetime.strptime(r['created_at'], "%Y-%m-%d %H:%M:%S")
             except:
                 pass
-    cursor.close()
-    conn.close()
     return res
 
 def get_all_projects():
@@ -158,6 +182,81 @@ def get_all_projects():
                 r['created_at'] = datetime.datetime.strptime(r['created_at'], "%Y-%m-%d %H:%M:%S")
             except:
                 pass
-    cursor.close()
-    conn.close()
     return res
+
+# --- JOBS (NEW) ---
+
+def create_job(job_id, project_id, status="QUEUED", stage="Pending"):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    query = """INSERT INTO jobs (id, project_id, status, stage) VALUES (%s, %s, %s, %s)"""
+    cursor.execute(query, (job_id, project_id, status, stage))
+    conn.commit()
+    return job_id
+
+def update_job(job_id, status=None, stage=None, result=None, error=None):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    updates = []
+    params = []
+    if status is not None:
+        updates.append("status = %s")
+        params.append(status)
+    if stage is not None:
+        updates.append("stage = %s")
+        params.append(stage)
+    if result is not None:
+        updates.append("result = %s")
+        if isinstance(result, (dict, list)):
+            result = json.dumps(result)
+        params.append(result)
+    if error is not None:
+        updates.append("error = %s")
+        params.append(error)
+        
+    if not updates:
+        return
+        
+    updates.append("updated_at = CURRENT_TIMESTAMP")
+    
+    query = f"UPDATE jobs SET {', '.join(updates)} WHERE id = %s"
+    params.append(job_id)
+    
+    cursor.execute(query, tuple(params))
+    conn.commit()
+
+def get_job(job_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM jobs WHERE id = %s", (job_id,))
+    return cursor.fetchone()
+
+# --- REPORTS (NEW) ---
+
+def create_report(report_id, project_id, report_data, pdf_url=None, radar_url=None):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    if isinstance(report_data, (dict, list)):
+        report_data = json.dumps(report_data)
+    query = """INSERT INTO reports (id, project_id, report_data, pdf_url, radar_url) 
+               VALUES (%s, %s, %s, %s, %s)"""
+    cursor.execute(query, (report_id, project_id, report_data, pdf_url, radar_url))
+    
+    # Also update project score and status
+    try:
+        report_json = json.loads(report_data)
+        score = report_json.get("impact", {}).get("overall_score", 0)
+        cursor.execute("UPDATE projects SET sdg_match_score = %s, status = 'Completed' WHERE id = %s", (score, project_id))
+    except:
+        pass
+        
+    conn.commit()
+    return report_id
+
+def get_report_by_project(project_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM reports WHERE project_id = %s ORDER BY created_at DESC LIMIT 1", (project_id,))
+    return cursor.fetchone()
+

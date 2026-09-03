@@ -8,7 +8,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 export async function uploadReportToStorage(projectId: string, reportId: string, pdfBuffer: Buffer): Promise<string> {
   const filePath = `${projectId}/${reportId}/report.pdf`;
   
-  const { data, error } = await supabase
+  const { error } = await supabase
     .storage
     .from('sdg-reports')
     .upload(filePath, pdfBuffer, {
@@ -28,8 +28,8 @@ export async function uploadReportToStorage(projectId: string, reportId: string,
   return publicUrl;
 }
 
-export async function updateReportStatus(reportId: string, status: string, pdfUrl?: string, scores?: any) {
-  const updateData: any = { status };
+export async function updateReportStatus(reportId: string, status: string, pdfUrl?: string, scores?: Record<string, unknown>) {
+  const updateData: Record<string, unknown> = { status };
   if (pdfUrl) updateData.pdf_url = pdfUrl;
   if (scores) updateData.scores = scores;
 
