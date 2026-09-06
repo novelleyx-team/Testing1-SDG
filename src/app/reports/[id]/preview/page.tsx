@@ -1,7 +1,8 @@
 import { ReportTemplate } from '@/lib/reports/templates/ReportTemplate';
 import { notFound } from 'next/navigation';
 
-export default async function PreviewPage({ params }: { params: { id: string } }) {
+export default async function PreviewPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   // Fetch report data from Python backend
   const res = await fetch(`http://127.0.0.1:8000/api/reports/${params.id}`, { cache: 'no-store' });
   

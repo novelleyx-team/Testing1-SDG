@@ -405,17 +405,7 @@ class SuggestionCreate(BaseModel):
 class SuggestionUpdate(BaseModel):
     status: str
 
-suggestions_db = [
-    {
-        "id": "SUG-1001",
-        "authorType": "Faculty",
-        "name": "Dr. Alan Turing",
-        "topic": "New Template Request",
-        "content": "We need a specific template for computational biology projects that automatically checks for genetic sequence plagiarism.",
-        "date": "Jul 12, 2026",
-        "status": "Reviewed"
-    }
-]
+suggestions_db = []
 
 import datetime
 import random

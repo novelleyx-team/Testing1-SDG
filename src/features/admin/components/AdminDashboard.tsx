@@ -20,43 +20,11 @@ import { motion } from "framer-motion";
 import { PREDEFINED_USERS } from "@/lib/constants/predefined-users";
 import { Role } from "@/lib/constants/roles";
 
-// EXTENDED MOCK DATA GENERATION
-const sdgDistribution = [
-  { name: 'SDG 3: Health', value: 45 },
-  { name: 'SDG 4: Education', value: 30 },
-  { name: 'SDG 7: Energy', value: 20 },
-  { name: 'SDG 11: Cities', value: 35 },
-  { name: 'SDG 13: Climate', value: 50 },
-  { name: 'SDG 1: No Poverty', value: 15 },
-  { name: 'SDG 6: Clean Water', value: 28 },
-];
-
-const statusDistribution = [
-  { name: 'Approved', value: 150 },
-  { name: 'Pending', value: 65 },
-  { name: 'Revision', value: 22 },
-];
-
-const deptScores = [
-  { dept: 'Comp Sci', score: 8.5 },
-  { dept: 'Elec Eng', score: 7.2 },
-  { dept: 'Mech Eng', score: 6.8 },
-  { dept: 'Civil Eng', score: 7.9 },
-  { dept: 'Bio Tech', score: 8.1 },
-  { dept: 'Data Sci', score: 8.8 },
-  { dept: 'Info Tech', score: 7.5 },
-];
-
-const timeSeriesData = [
-  { name: 'Jan', submissions: 10, approvals: 5 },
-  { name: 'Feb', submissions: 25, approvals: 15 },
-  { name: 'Mar', submissions: 45, approvals: 30 },
-  { name: 'Apr', submissions: 80, approvals: 60 },
-  { name: 'May', submissions: 120, approvals: 90 },
-  { name: 'Jun', submissions: 180, approvals: 140 },
-  { name: 'Jul', submissions: 210, approvals: 160 },
-  { name: 'Aug', submissions: 245, approvals: 190 },
-];
+// Dynamic Data (Initially empty)
+const sdgDistribution: Record<string, number | string>[] = [];
+const statusDistribution: Record<string, number | string>[] = [];
+const deptScores: Record<string, number | string>[] = [];
+const timeSeriesData: Record<string, number | string>[] = [];
 
 const baseStudentsData: Record<string, string | number>[] = [];
 
@@ -91,7 +59,7 @@ export function AdminDashboard() {
             </div>
             <div>
               <p className="text-sm font-medium text-slate-500">Total Submissions</p>
-              <h3 className="text-2xl font-bold text-slate-900">245</h3>
+              <h3 className="text-2xl font-bold text-slate-900">0</h3>
             </div>
           </CardContent>
         </Card>
@@ -102,7 +70,7 @@ export function AdminDashboard() {
             </div>
             <div>
               <p className="text-sm font-medium text-slate-500">Approved Projects</p>
-              <h3 className="text-2xl font-bold text-slate-900">150</h3>
+              <h3 className="text-2xl font-bold text-slate-900">0</h3>
             </div>
           </CardContent>
         </Card>
@@ -113,7 +81,7 @@ export function AdminDashboard() {
             </div>
             <div>
               <p className="text-sm font-medium text-slate-500">Active Students</p>
-              <h3 className="text-2xl font-bold text-slate-900">312</h3>
+              <h3 className="text-2xl font-bold text-slate-900">0</h3>
             </div>
           </CardContent>
         </Card>
@@ -124,7 +92,7 @@ export function AdminDashboard() {
             </div>
             <div>
               <p className="text-sm font-medium text-slate-500">Avg AI Score</p>
-              <h3 className="text-2xl font-bold text-slate-900">8.3</h3>
+              <h3 className="text-2xl font-bold text-slate-900">0.0</h3>
             </div>
           </CardContent>
         </Card>
@@ -139,7 +107,7 @@ export function AdminDashboard() {
             </div>
             <div>
               <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Students</p>
-              <h3 className="text-xl font-bold text-slate-900">3,450</h3>
+              <h3 className="text-xl font-bold text-slate-900">0</h3>
             </div>
           </CardContent>
         </Card>
@@ -150,7 +118,7 @@ export function AdminDashboard() {
             </div>
             <div>
               <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Faculty</p>
-              <h3 className="text-xl font-bold text-slate-900">120</h3>
+              <h3 className="text-xl font-bold text-slate-900">0</h3>
             </div>
           </CardContent>
         </Card>

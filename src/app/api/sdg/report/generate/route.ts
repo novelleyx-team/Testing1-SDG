@@ -1,10 +1,11 @@
+export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { processReportGeneration } from '@/lib/reports/generator';
 import { ProjectData } from '@/lib/ai/analyzer';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost:8000';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'dummy-key';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function POST(req: Request) {

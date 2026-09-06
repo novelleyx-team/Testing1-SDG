@@ -9,7 +9,7 @@ export default function StudentsPage() {
   const { user } = useAuthStore()
   const department = user?.department || "Unknown"
 
-  // Generate exactly 20 mock students for the faculty's department
+  // Zero-Mock Policy: Empty array until backend connection is established
   const students: { id: string, name: string, department: string, ongoingProjects: number, avgSdgScore: string, status: string }[] = [];
 
   return (
@@ -41,20 +41,28 @@ export default function StudentsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {students.map((student) => (
-                <TableRow key={student.id}>
-                  <TableCell className="font-medium text-gray-500">{student.id}</TableCell>
-                  <TableCell className="font-bold text-gray-900 dark:text-gray-100">{student.name}</TableCell>
-                  <TableCell>{student.department}</TableCell>
-                  <TableCell className="text-center font-medium">{student.ongoingProjects}</TableCell>
-                  <TableCell className="text-center text-blue-600 font-bold">{student.avgSdgScore}</TableCell>
-                  <TableCell className="text-right">
-                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${student.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
-                      {student.status}
-                    </span>
+              {students.length > 0 ? (
+                students.map((student) => (
+                  <TableRow key={student.id}>
+                    <TableCell className="font-medium text-gray-500">{student.id}</TableCell>
+                    <TableCell className="font-bold text-gray-900 dark:text-gray-100">{student.name}</TableCell>
+                    <TableCell>{student.department}</TableCell>
+                    <TableCell className="text-center font-medium">{student.ongoingProjects}</TableCell>
+                    <TableCell className="text-center text-blue-600 font-bold">{student.avgSdgScore}</TableCell>
+                    <TableCell className="text-right">
+                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${student.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
+                        {student.status}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-24 text-center text-gray-500">
+                    No students found.
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </CardContent>

@@ -17,8 +17,8 @@ export default function AnalyticsPage() {
             <Activity className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">+24%</div>
-            <p className="text-xs text-green-600 font-medium mt-1">Increasing this month</p>
+            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">0%</div>
+            <p className="text-xs text-gray-500 font-medium mt-1">No data available</p>
           </CardContent>
         </Card>
         <Card className="rounded-xl">
@@ -27,8 +27,8 @@ export default function AnalyticsPage() {
             <BarChart3 className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">8.4/10</div>
-            <p className="text-xs text-gray-500 mt-1">High accuracy in SDG mapping</p>
+            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">0.0/10</div>
+            <p className="text-xs text-gray-500 mt-1">No mapping data</p>
           </CardContent>
         </Card>
         <Card className="rounded-xl">
@@ -37,8 +37,8 @@ export default function AnalyticsPage() {
             <Users2 className="h-4 w-4 text-emerald-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">86%</div>
-            <p className="text-xs text-gray-500 mt-1">Of mentored students are active</p>
+            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">0%</div>
+            <p className="text-xs text-gray-500 mt-1">No active students</p>
           </CardContent>
         </Card>
       </div>
@@ -52,7 +52,7 @@ export default function AnalyticsPage() {
         </CardHeader>
         <CardContent>
           <div className="h-[300px] w-full flex items-end justify-between gap-2 pt-10 px-4">
-            {/* Mock Bar Chart */}
+            {/* Bar Chart (Empty State) */}
             {[0, 0, 0, 0, 0, 0].map((height, i) => (
               <div key={i} className="w-full flex flex-col items-center gap-2 group relative">
                 {/* Tooltip */}

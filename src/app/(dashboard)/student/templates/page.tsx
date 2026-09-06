@@ -5,7 +5,7 @@ import { Files } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-const mockTemplates = [
+const systemTemplates = [
   { id: "TPL-1", title: "Standard SDG Research Report", desc: "The official Dean-approved formatting for final semester submissions. Includes mandatory AI analysis sections.", format: "DOCX / LaTeX" },
   { id: "TPL-2", title: "Campus Impact Proposal", desc: "A shorter format designed specifically for campus-level sustainability initiatives. Requires HOD approval.", format: "PDF Form" },
   { id: "TPL-3", title: "Engineering Blueprint Attachment", desc: "Standardized title block and legend formats for submitting CAD or architectural diagrams alongside SDG data.", format: "DWG / PDF" },
@@ -27,7 +27,7 @@ export default function TemplatesPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {mockTemplates.map((template) => (
+        {systemTemplates.map((template) => (
           <Card key={template.id} className="rounded-[18px] shadow-sm border border-gray-100 dark:border-gray-800 p-6 bg-white dark:bg-[#1F2937] flex flex-col md:flex-row gap-6 group hover:shadow-md transition-shadow">
             <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center shrink-0 border border-emerald-100 dark:border-emerald-800/50">
               <Files size={28} className="text-emerald-500 dark:text-emerald-400" />

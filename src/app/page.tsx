@@ -99,7 +99,7 @@ function SuggestionsTablet() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-gray-700">Full Name</label>
-                  <input name="name" type="text" required placeholder="e.g. Jane Doe" className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition-colors outline-none" />
+                  <input name="name" type="text" required placeholder="Your Full Name" className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition-colors outline-none" />
                 </div>
               </div>
               

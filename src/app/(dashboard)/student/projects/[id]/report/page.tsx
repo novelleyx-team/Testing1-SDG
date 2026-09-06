@@ -34,15 +34,10 @@ const allSDGs = [
   { id: 17, name: "SDG 17: Partnerships" },
 ];
 
-// Helper to generate a realistic mock score
-const generateMockScores = (targetSdgNumber: number) => {
+// Zero-Mock Policy: Do not generate fake scores. Default to 0 until real data is available.
+const getSdgScores = () => {
   return allSDGs.map((sdg) => {
-    // The target SDG gets a high score
-    if (sdg.id === targetSdgNumber) {
-      return { ...sdg, score: Math.floor(Math.random() * 15) + 85 }; // 85-100
-    }
-    // Related SDGs get moderate scores, others get low scores
-    return { ...sdg, score: Math.floor(Math.random() * 40) + 10 }; // 10-50
+    return { ...sdg, score: 0 }; 
   });
 };
 
@@ -64,8 +59,7 @@ export default function ReportPage() {
     );
   }
 
-  const targetSdgNumber = parseInt(project.targetSdg.replace(/[^0-9]/g, '')) || 1;
-  const scoresData = generateMockScores(targetSdgNumber);
+  const scoresData = getSdgScores();
   const matchingData = scoresData.filter(d => d.score >= 40);
 
   const handlePrint = () => {

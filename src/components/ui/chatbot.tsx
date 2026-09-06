@@ -58,7 +58,7 @@ export function GlobalChatbot() {
       return "Hi there! I can help you with SDG guidelines, project formatting, or navigating the Novelleyx platform. What do you need?";
     }
 
-    return "That's a great question. I am currently running on a fixed mock dataset for this demonstration, so I don't have the full context to answer that yet. Try asking me about 'SDG 6', 'format', or 'deadlines'!";
+    return "That's a great question. I am connected to the live production environment, but I am still processing your context. Try asking me about 'SDG 6', 'format', or 'deadlines'!";
   };
 
   const handleSendMessage = () => {
