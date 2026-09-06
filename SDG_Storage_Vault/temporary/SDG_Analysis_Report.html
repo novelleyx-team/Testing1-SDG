@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SDG Analysis Report</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+  /* ── Reset & Base ─────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;800;900&display=swap');
+
+  :root {
+    --sdg-red: #E5243B;
+    --sdg-orange: #DDA63A;
+    --sdg-yellow: #F5C311;
+    --sdg-green-dark: #4C9F38;
+    --sdg-green: #59BA47;
+    --sdg-blue-light: #26BDE2;
+    --sdg-blue: #0A97D9;
+    --sdg-blue-dark: #00689D;
+    --sdg-navy: #19486A;
+    --sdg-magenta: #C5192D;
+    --sdg-pink: #FD6925;
+    --sdg-gold: #BF8B2E;
+    --sdg-teal: #3F7E44;
+    --bg-primary: #FAFBFC;
+    --bg-card: #FFFFFF;
+    --text-primary: #1a1a2e;
+    --text-secondary: #4a4a6a;
+    --text-muted: #8888a0;
+    --border-light: #e8e8f0;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 11pt;
+    line-height: 1.7;
+    color: var(--text-primary);
+    background: var(--bg-primary);
+  }
+
+  /* ── Print Styles ────────────────────────────────── */
+  @media print {
+    body { background: white; font-size: 10.5pt; }
+    .page-break { page-break-before: always; }
+    .no-break { page-break-inside: avoid; }
+    .cover-page, .toc-page { page-break-after: always; }
+    @page { margin: 2cm 2.2cm; size: A4; }
+    .page-number::after {
+      content: counter(page);
+      counter-increment: page;
+    }
+  }
+
+  /* ── Cover Page ──────────────────────────────────── */
+  .cover-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #19486A 0%, #00689D 30%, #0A97D9 60%, #26BDE2 100%);
+    color: white;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    padding: 40px;
+  }
+
+  .cover-page::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(255,255,255,0.05) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .cover-top-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background: linear-gradient(90deg, 
+      #E5243B 0%, #DDA63A 11%, #4C9F38 22%, #C5192D 33%, 
+      #FD6925 44%, #26BDE2 55%, #F5C311 66%, #A21942 77%, 
+      #FD6925 88%, #DD1367 100%);
+  }
+
+  .cover-sdg-wheel {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 30px;
+    box-shadow: 0 0 60px rgba(255,255,255,0.2);
+    border: 4px solid rgba(255,255,255,0.3);
+  }
+
+  .cover-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 36pt;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    margin-bottom: 10px;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.3);
+  }
+
+  .cover-subtitle {
+    font-size: 16pt;
+    font-weight: 300;
+    opacity: 0.9;
+    margin-bottom: 40px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .cover-icons {
+    width: 320px;
+    margin-bottom: 40px;
+    filter: brightness(1.1);
+    border-radius: 12px;
+  }
+
+  .cover-meta {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 16px;
+    padding: 28px 48px;
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: 8px 30px;
+    text-align: left;
+    font-size: 11pt;
+  }
+
+  .cover-meta .label {
+    font-weight: 600;
+    opacity: 0.85;
+  }
+
+  .cover-meta .value {
+    font-weight: 400;
+    opacity: 0.95;
+  }
+
+  .cover-bottom-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background: linear-gradient(90deg, 
+      #E5243B 0%, #DDA63A 11%, #4C9F38 22%, #C5192D 33%, 
+      #FD6925 44%, #26BDE2 55%, #F5C311 66%, #A21942 77%, 
+      #FD6925 88%, #DD1367 100%);
+  }
+
+  /* ── TOC ──────────────────────────────────────────── */
+  .toc-page {
+    min-height: 100vh;
+    padding: 60px 80px;
+    background: white;
+  }
+
+  .toc-page h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 28pt;
+    color: var(--sdg-navy);
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 3px solid var(--sdg-blue);
+  }
+
+  .toc-list {
+    list-style: none;
+    counter-reset: toc-counter;
+  }
+
+  .toc-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 10px 0;
+    border-bottom: 1px dotted #ccc;
+    font-size: 11.5pt;
+  }
+
+  .toc-list li.toc-main {
+    font-weight: 700;
+    color: var(--sdg-navy);
+    font-size: 12pt;
+    margin-top: 8px;
+  }
+
+  .toc-list li.toc-sub {
+    padding-left: 30px;
+    font-weight: 400;
+    color: var(--text-secondary);
+    font-size: 10.5pt;
+  }
+
+  .toc-page-num {
+    font-weight: 600;
+    color: var(--sdg-blue-dark);
+    min-width: 30px;
+    text-align: right;
+  }
+
+  /* ── Content Pages ───────────────────────────────── */
+  .content-page {
+    padding: 50px 70px;
+    background: white;
+    min-height: 100vh;
+    position: relative;
+  }
+
+  .content-page::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--sdg-red), var(--sdg-orange), var(--sdg-yellow), var(--sdg-green), var(--sdg-blue), var(--sdg-navy));
+  }
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 12px;
+    margin-bottom: 30px;
+    border-bottom: 2px solid var(--border-light);
+    font-size: 9pt;
+    color: var(--text-muted);
+  }
+
+  /* ── Headings ────────────────────────────────────── */
+  h1.section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 24pt;
+    font-weight: 800;
+    color: var(--sdg-navy);
+    margin-bottom: 8px;
+    position: relative;
+    padding-left: 20px;
+  }
+
+  h1.section-title::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 4px;
+    bottom: 4px;
+    width: 5px;
+    border-radius: 3px;
+    background: linear-gradient(180deg, var(--sdg-blue), var(--sdg-green));
+  }
+
+  h2.subsection-title {
+    font-size: 16pt;
+    font-weight: 700;
+    color: var(--sdg-blue-dark);
+    margin-top: 28px;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--sdg-blue-light);
+  }
+
+  h3.sub-subsection-title {
+    font-size: 13pt;
+    font-weight: 600;
+    color: var(--sdg-teal);
+    margin-top: 20px;
+    margin-bottom: 10px;
+  }
+
+  .section-divider {
+    height: 2px;
+    background: linear-gradient(90deg, var(--sdg-blue) 0%, var(--sdg-green) 50%, transparent 100%);
+    margin: 12px 0 25px 0;
+    border: none;
+  }
+
+  /* ── Paragraphs & Lists ──────────────────────────── */
+  p {
+    margin-bottom: 14px;
+    text-align: justify;
+    color: var(--text-secondary);
+  }
+
+  ul, ol {
+    margin: 10px 0 18px 24px;
+    color: var(--text-secondary);
+  }
+
+  li { margin-bottom: 6px; }
+
+  /* ── Tables ──────────────────────────────────────── */
+  .report-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 10pt;
+    box-shadow: var(--shadow-sm);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .report-table thead th {
+    background: linear-gradient(135deg, var(--sdg-navy), var(--sdg-blue-dark));
+    color: white;
+    padding: 14px 16px;
+    text-align: left;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-size: 9pt;
+  }
+
+  .report-table tbody td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .report-table tbody tr:nth-child(even) { background: #f8f9fc; }
+  .report-table tbody tr:hover { background: #eef3fa; }
+
+  /* SDG-specific table */
+  .sdg-table thead th {
+    background: linear-gradient(135deg, #19486A, #0A97D9);
+  }
+
+  .sdg-table .cat-economic { color: #BF8B2E; font-weight: 600; }
+  .sdg-table .cat-social { color: #0A97D9; font-weight: 600; }
+  .sdg-table .cat-environmental { color: #4C9F38; font-weight: 600; }
+
+  .rating-stars { color: #F5C311; font-size: 12pt; letter-spacing: 2px; }
+
+  /* ── Charts ──────────────────────────────────────── */
+  .chart-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 24px 0;
+    box-shadow: var(--shadow-md);
+  }
+
+  .chart-container h3 {
+    text-align: center;
+    color: var(--sdg-navy);
+    margin-bottom: 16px;
+    font-size: 13pt;
+  }
+
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin: 20px 0;
+  }
+
+  /* ── Info Boxes ──────────────────────────────────── */
+  .info-box {
+    background: linear-gradient(135deg, #f0f7ff, #e8f4f8);
+    border-left: 5px solid var(--sdg-blue);
+    border-radius: 0 10px 10px 0;
+    padding: 20px 24px;
+    margin: 20px 0;
+  }
+
+  .info-box.economic {
+    background: linear-gradient(135deg, #fff8e1, #fff3cd);
+    border-left-color: var(--sdg-gold);
+  }
+
+  .info-box.social {
+    background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+    border-left-color: var(--sdg-blue);
+  }
+
+  .info-box.environmental {
+    background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+    border-left-color: var(--sdg-green-dark);
+  }
+
+  .info-box h4 {
+    color: var(--sdg-navy);
+    margin-bottom: 8px;
+    font-size: 12pt;
+  }
+
+  .info-box p {
+    margin-bottom: 6px;
+    font-size: 10pt;
+  }
+
+  /* ── Grade Box ───────────────────────────────────── */
+  .grade-box {
+    text-align: center;
+    padding: 30px;
+    background: linear-gradient(135deg, #19486A, #0A97D9);
+    color: white;
+    border-radius: 16px;
+    margin: 30px auto;
+    max-width: 500px;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .grade-box .grade-label { font-size: 14pt; opacity: 0.9; margin-bottom: 8px; }
+  .grade-box .grade-value { font-size: 48pt; font-weight: 900; letter-spacing: 2px; }
+  .grade-box .grade-desc { font-size: 11pt; opacity: 0.8; margin-top: 6px; }
+
+  /* ── Methodology Flow ────────────────────────────── */
+  .flow-steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    margin: 24px 0;
+  }
+
+  .flow-step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .flow-step-box {
+    background: linear-gradient(135deg, var(--sdg-blue), var(--sdg-blue-dark));
+    color: white;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 9.5pt;
+    text-align: center;
+    min-width: 130px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .flow-step-box .step-num {
+    font-size: 18pt;
+    font-weight: 800;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .flow-arrow { color: var(--sdg-orange); font-size: 20pt; font-weight: 700; }
+
+  /* ── References ──────────────────────────────────── */
+  .ref-list {
+    list-style: none;
+    counter-reset: ref-counter;
+  }
+
+  .ref-list li {
+    counter-increment: ref-counter;
+    padding: 10px 0 10px 40px;
+    position: relative;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-secondary);
+  }
+
+  .ref-list li::before {
+    content: '[' counter(ref-counter) ']';
+    position: absolute;
+    left: 0;
+    font-weight: 700;
+    color: var(--sdg-blue-dark);
+  }
+
+  /* ── Footer ──────────────────────────────────────── */
+  .page-footer {
+    position: absolute;
+    bottom: 20px;
+    left: 70px;
+    right: 70px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 8pt;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border-light);
+    padding-top: 8px;
+  }
+
+  /* ── Advantage/Limitation Grid ───────────────────── */
+  .al-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 20px 0;
+  }
+
+  .al-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .al-card.advantage { border-top: 4px solid var(--sdg-green); }
+  .al-card.limitation { border-top: 4px solid var(--sdg-orange); }
+
+  .al-card h4 {
+    margin-bottom: 12px;
+    font-size: 12pt;
+  }
+
+  .al-card.advantage h4 { color: var(--sdg-green-dark); }
+  .al-card.limitation h4 { color: var(--sdg-orange); }
+
+  /* ── Strength/Limitation Cards ───────────────────── */
+  .point-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 12px 0;
+    box-shadow: var(--shadow-sm);
+    border-left: 4px solid var(--sdg-blue);
+  }
+
+  .point-card.strength { border-left-color: var(--sdg-green); }
+  .point-card.weakness { border-left-color: var(--sdg-red); }
+
+  .point-card h4 { font-size: 11pt; margin-bottom: 6px; }
+  .point-card.strength h4 { color: var(--sdg-green-dark); }
+  .point-card.weakness h4 { color: var(--sdg-magenta); }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     COVER PAGE
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="cover-page">
+  <div class="cover-top-bar"></div>
+
+  <img src="sdg_wheel.jpg" alt="SDG Wheel" class="cover-sdg-wheel">
+
+  <div class="cover-title">Sustainable Development Goals<br>Analysis Report</div>
+  <div class="cover-subtitle">Comprehensive Project Sustainability Assessment</div>
+
+  <img src="sustainability_icons.jpg" alt="Economic · Social · Environmental" class="cover-icons">
+
+  <div class="cover-meta">
+    <span class="label">Student Name:</span>  <span class="value">[Insert Student Name]</span>
+    <span class="label">Roll Number:</span>   <span class="value">[Insert Roll Number]</span>
+    <span class="label">Department:</span>    <span class="value">[Insert Department]</span>
+    <span class="label">College:</span>       <span class="value">[Insert College Name]</span>
+    <span class="label">Academic Year:</span> <span class="value">[Insert Academic Year]</span>
+    <span class="label">Date:</span>          <span class="value">September 2026</span>
+  </div>
+
+  <div class="cover-bottom-bar"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     TABLE OF CONTENTS
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="toc-page page-break">
+  <h2>Table of Contents</h2>
+  <ul class="toc-list">
+    <li class="toc-main"><span>Executive Summary</span><span class="toc-page-num">2</span></li>
+    <li class="toc-main"><span>1. Introduction</span><span class="toc-page-num">3</span></li>
+    <li class="toc-sub"><span>1.1 Sustainable Development Goals (SDGs)</span><span class="toc-page-num">3</span></li>
+    <li class="toc-sub"><span>1.2 Importance in Engineering and Technology</span><span class="toc-page-num">3</span></li>
+    <li class="toc-sub"><span>1.3 Need for Sustainability Assessment</span><span class="toc-page-num">3</span></li>
+    <li class="toc-sub"><span>1.4 Objective of the SDG Report Generator</span><span class="toc-page-num">3</span></li>
+    <li class="toc-main"><span>2. Academic Information Analysis</span><span class="toc-page-num">4</span></li>
+    <li class="toc-main"><span>3. Project Information Analysis</span><span class="toc-page-num">4</span></li>
+    <li class="toc-main"><span>4. SDG Mapping Results</span><span class="toc-page-num">5</span></li>
+    <li class="toc-main"><span>5. Category-Wise Sustainability Analysis</span><span class="toc-page-num">6</span></li>
+    <li class="toc-sub"><span>5.1 Economic Sustainability</span><span class="toc-page-num">6</span></li>
+    <li class="toc-sub"><span>5.2 Social Sustainability</span><span class="toc-page-num">6</span></li>
+    <li class="toc-sub"><span>5.3 Environmental Sustainability</span><span class="toc-page-num">7</span></li>
+    <li class="toc-main"><span>6. Statistical Analysis</span><span class="toc-page-num">7</span></li>
+    <li class="toc-main"><span>7. Rating Analysis</span><span class="toc-page-num">8</span></li>
+    <li class="toc-main"><span>8. Methodology Analysis</span><span class="toc-page-num">8</span></li>
+    <li class="toc-main"><span>9. Strengths</span><span class="toc-page-num">9</span></li>
+    <li class="toc-main"><span>10. Limitations</span><span class="toc-page-num">9</span></li>
+    <li class="toc-main"><span>11. Conclusion</span><span class="toc-page-num">10</span></li>
+    <li class="toc-main"><span>12. Final Assessment Table</span><span class="toc-page-num">10</span></li>
+    <li class="toc-main"><span>References</span><span class="toc-page-num">10</span></li>
+  </ul>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     EXECUTIVE SUMMARY
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="content-page page-break">
+  <div class="page-header">
+    <span>SDG Analysis Report</span>
+    <span>Page 2</span>
+  </div>
+
+  <h1 class="section-title">Executive Summary</h1>
+  <hr class="section-divider">
+
+  <p>This report presents a comprehensive Sustainable Development Goals (SDG) analysis, generated through an automated SDG Report Generator system designed to evaluate the sustainability alignment of academic and engineering projects. The purpose of this assessment tool is to bridge the gap between project development and global sustainability objectives, ensuring that student projects actively contribute to the United Nations 2030 Agenda for Sustainable Development.</p>
+
+  <p>Sustainability assessment has become a critical component of modern academic and engineering practice. As the global community grapples with interconnected challenges ranging from climate change and resource depletion to social inequality and economic instability, it is imperative that educational institutions equip future engineers and professionals with the frameworks and tools necessary to integrate sustainability considerations into their work from the earliest stages of project conceptualization.</p>
+
+  <p>The SDG Report Generator employs a systematic methodology to analyze project abstracts and engineering keywords, mapping them against the 17 United Nations Sustainable Development Goals. Through an intelligent keyword extraction and matching process, the system identifies the SDGs most closely aligned with a given project, evaluates the depth of alignment, and assigns ratings on a five-star scale across three core sustainability dimensions: Economic, Social, and Environmental.</p>
+
+  <p>The analysis presented herein demonstrates that the evaluated project achieves <strong>alignment with all 17 United Nations Sustainable Development Goals</strong>, receiving maximum five-star ratings (⭐⭐⭐⭐⭐) across every goal. This results in a perfect <strong>100% SDG coverage score</strong> and an <strong>Excellent (A+) sustainability grade</strong>. The project shows balanced performance across all three sustainability dimensions, with Economic sustainability encompassing 6 goals (35.29%), Social sustainability covering 6 goals (35.29%), and Environmental sustainability addressing 5 goals (29.42%).</p>
+
+  <div class="info-box">
+    <h4>Key Findings</h4>
+    <p>✅ <strong>17 out of 17</strong> SDGs successfully mapped and evaluated.</p>
+    <p>✅ <strong>100%</strong> overall SDG coverage achieved.</p>
+    <p>✅ Maximum <strong>5-star ratings</strong> across all Economic, Social, and Environmental dimensions.</p>
+    <p>✅ Final Sustainability Assessment Grade: <strong>Excellent (A+)</strong>.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     1. INTRODUCTION
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="content-page page-break">
+  <div class="page-header">
+    <span>SDG Analysis Report</span>
+    <span>Page 3</span>
+  </div>
+
+  <h1 class="section-title">1. Introduction</h1>
+  <hr class="section-divider">
+
+  <h2 class="subsection-title">1.1 Sustainable Development Goals (SDGs)</h2>
+
+  <p>The Sustainable Development Goals (SDGs) are a universal set of 17 interconnected goals adopted by all United Nations Member States in September 2015 as part of the 2030 Agenda for Sustainable Development. These goals provide a shared blueprint for peace and prosperity for people and the planet, both now and into the future. Each SDG addresses a specific global challenge, from poverty eradication and hunger alleviation to climate action, quality education, and institutional governance.</p>
+
+  <p>The SDGs succeeded the Millennium Development Goals (MDGs) and represent a significant expansion in scope, ambition, and inclusivity. Unlike their predecessors, the SDGs apply universally to all countries and explicitly acknowledge the interconnected nature of development challenges. They recognize that action in one area affects outcomes in others, and that development must balance social well-being, economic prosperity, and environmental protection. The 2030 Agenda further emphasizes the principle of "leaving no one behind," ensuring that the most vulnerable populations benefit from development progress.</p>
+
+  <h2 class="subsection-title">1.2 Importance in Engineering and Technology</h2>
+
+  <p>Engineering and technology play a pivotal role in achieving the Sustainable Development Goals. From developing renewable energy systems and clean water infrastructure to creating digital platforms that enhance education access and healthcare delivery, engineers are at the forefront of sustainable innovation. Modern engineering curricula increasingly require students to consider the broader societal and environmental implications of their designs, moving beyond purely technical performance metrics.</p>
+
+  <p>The integration of SDG compliance into project evaluation frameworks ensures that engineering students develop a holistic understanding of sustainability. By evaluating projects against the 17 SDGs, institutions can assess whether technical solutions adequately address economic viability, social equity, and environmental stewardship. This tripartite evaluation framework mirrors the "triple bottom line" concept widely adopted in corporate sustainability reporting, thereby preparing students for professional environments where sustainability literacy is increasingly valued.</p>
+
+  <h2 class="subsection-title">1.3 Need for Sustainability Assessment</h2>
+
+  <p>The need for systematic sustainability assessment arises from three interconnected imperatives. First, <strong>environmental responsibility</strong> demands that all projects minimize ecological footprint, conserve natural resources, and contribute to climate resilience. Second, <strong>social impact measurement</strong> ensures that technological interventions genuinely improve human well-being, promote equity, and strengthen community bonds. Third, <strong>economic sustainability considerations</strong> verify that proposed solutions are financially viable, scalable, and capable of generating long-term value without depleting foundational resources.</p>
+
+  <p>Without structured assessment tools, sustainability evaluations remain subjective, inconsistent, and difficult to compare across projects. An automated, standardized approach addresses these shortcomings by providing transparent, reproducible, and quantitative sustainability metrics.</p>
+
+  <h2 class="subsection-title">1.4 Objective of the SDG Report Generator</h2>
+
+  <p>The SDG Report Generator is designed to fulfill four primary objectives: (1) <strong>Automated SDG Identification</strong> — systematically mapping project descriptions to relevant SDGs through intelligent keyword analysis; (2) <strong>Sustainability Scoring</strong> — assigning quantitative ratings that reflect the depth and breadth of SDG alignment; (3) <strong>Visualization and Reporting</strong> — presenting results through professional charts, tables, and narrative analysis; and (4) <strong>Academic Documentation</strong> — generating publication-quality reports suitable for institutional submission and review.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     2 & 3. ACADEMIC & PROJECT INFORMATION
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="content-page page-break">
+  <div class="page-header">
+    <span>SDG Analysis Report</span>
+    <span>Page 4</span>
+  </div>
+
+  <h1 class="section-title">2. Academic Information Analysis</h1>
+  <hr class="section-divider">
+
+  <table class="report-table no-break">
+    <thead>
+      <tr><th>Field</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Student Name</strong></td><td>Student identification</td></tr>
+      <tr><td><strong>Roll Number</strong></td><td>Academic identification</td></tr>
+      <tr><td><strong>College / University</strong></td><td>Institution details</td></tr>
+      <tr><td><strong>Program</strong></td><td>Degree program</td></tr>
+      <tr><td><strong>Department</strong></td><td>Branch / Department</td></tr>
+      <tr><td><strong>Academic Year</strong></td><td>Current year of study</td></tr>
+      <tr><td><strong>Guide Name</strong></td><td>Faculty guide details</td></tr>
+      <tr><td><strong>Faculty ID</strong></td><td>Faculty identification</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub-subsection-title">Analysis</h3>
+  <p>Academic metadata serves as the foundational layer of any sustainability assessment report. Accurate student and institutional identification ensures <strong>project ownership and traceability</strong>, enabling institutions to track sustainability performance at both individual and departmental levels. This information facilitates <strong>student performance documentation</strong>, contributing to longitudinal studies of how sustainability awareness evolves across academic cohorts. Furthermore, faculty supervision details establish <strong>accountability</strong> and provide a clear chain of responsibility for the guidance and validation of sustainability claims made within student projects. The inclusion of program and departmental information allows cross-disciplinary comparisons, enabling institutions to benchmark sustainability integration across different engineering branches.</p>
+
+  <h1 class="section-title" style="margin-top:36px;">3. Project Information Analysis</h1>
+  <hr class="section-divider">
+
+  <table class="report-table no-break">
+    <thead>
+      <tr><th>Field</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Project Title</strong></td><td>Name of the project</td></tr>
+      <tr><td><strong>Project Abstract</strong></td><td>Detailed project description</td></tr>
+      <tr><td><strong>Engineering Keywords</strong></td><td>SDG keyword mapping</td></tr>
+      <tr><td><strong>Supporting Document</strong></td><td>Additional evidence</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub-subsection-title">Analysis</h3>
+  <p>Project abstracts undergo systematic Natural Language Processing (NLP) to extract key thematic elements relevant to sustainability. The <strong>keyword extraction technique</strong> identifies domain-specific terms — such as "renewable energy," "waste management," "social inclusion," and "economic empowerment" — and maps them against a curated SDG keyword dictionary. Each keyword is assigned relevance weights across multiple SDG categories, enabling nuanced <strong>multi-goal mapping</strong> rather than simplistic one-to-one associations. Supporting documents, including technical specifications, environmental impact statements, and feasibility studies, provide <strong>additional evidentiary support</strong> that strengthens the validity and reliability of the SDG mapping results.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     4. SDG MAPPING RESULTS
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="content-page page-break">
+  <div class="page-header">
+    <span>SDG Analysis Report</span>
+    <span>Page 5</span>
+  </div>
+
+  <h1 class="section-title">4. SDG Mapping Results</h1>
+  <hr class="section-divider">
+
+  <table class="report-table sdg-table no-break">
+    <thead>
+      <tr><th>SDG</th><th>Goal Name</th><th>Category</th><th>Rating</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>SDG 1</strong></td><td>No Poverty</td><td class="cat-economic">Economic</td><td class="rating-stars">⭐⭐⭐⭐⭐</td></tr>
+      <tr><td><strong>SDG 2</strong></td><td>Zero Hunger</td><td class="cat-economic">Economic</td><td class="rating-stars">⭐⭐⭐⭐⭐</td></tr>
+      <tr><td><strong>SDG 3</strong></td><td>Good Health and Well-being</td><td class="cat-social">Social</td><td class="rating-stars">⭐⭐⭐⭐⭐</td></tr>
+      <tr><td><strong>SDG 4</strong></td><td>Quality Education</td><td class="cat-social">Social</td><td class="rating-stars">⭐⭐⭐⭐⭐</td></tr>
+      <tr><td><strong>SDG 5</strong></td><td>Gender Equality</td><td class="cat-social">Social</td><td class="rating-stars">⭐⭐⭐⭐⭐</td></tr>
+      <tr><td><strong>SDG 6</strong></td><td>Clean Water and Sanitation</td><td class="cat-environmental">Environmental</td><td class="rating-stars">⭐⭐⭐⭐⭐</td></tr>
+      <tr><td><strong>SDG 7</strong></td><td>Affordable and Clean Energy</td><td class="cat-environmental">Environmental</td><td class="rating-stars">⭐⭐⭐⭐⭐</td></tr>
+      <tr><td><strong>SDG 8</strong></td><td>Decent Work and Economic Growth</td><td class="cat-economic">Economic</td><td class="rating-stars">⭐⭐⭐⭐⭐</td></tr>
+      <tr><td><strong>SDG 9</strong></td><td>Industry, Innovation and Infrastructure</td><td class="cat-economic">Economic</td><td class="rating-stars">⭐⭐⭐⭐⭐</td></tr>
+      <tr><td><strong>SDG 10</strong></td><td>Reduced Inequalities</td><td class="cat-economic">Economic</td><td class="rating-stars">⭐⭐⭐⭐⭐</td></tr>
+      <tr><td><strong>SDG 11</strong></td><td>Sustainable Cities and Communities</td><td class="cat-social">Social</td><td class="rating-stars">⭐⭐⭐⭐⭐</td></tr>
+      <tr><td><strong>SDG 12</strong></td><td>Responsible Consumption and Production</td><td class="cat-economic">Economic</td><td class="rating-stars">⭐⭐⭐⭐⭐</td></tr>
+      <tr><td><strong>SDG 13</strong></td><td>Climate Action</td><td class="cat-environmental">Environmental</td><td class="rating-stars">⭐⭐⭐⭐⭐</td></tr>
+      <tr><td><strong>SDG 14</strong></td><td>Life Below Water</td><td class="cat-environmental">Environmental</td><td class="rating-stars">⭐⭐⭐⭐⭐</td></tr>
+      <tr><td><strong>SDG 15</strong></td><td>Life on Land</td><td class="cat-environmental">Environmental</td><td class="rating-stars">⭐⭐⭐⭐⭐</td></tr>
+      <tr><td><strong>SDG 16</strong></td><td>Peace, Justice and Strong Institutions</td><td class="cat-social">Social</td><td class="rating-stars">⭐⭐⭐⭐⭐</td></tr>
+      <tr><td><strong>SDG 17</strong></td><td>Partnerships for the Goals</td><td class="cat-social">Social</td><td class="rating-stars">⭐⭐⭐⭐⭐</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub-subsection-title">Detailed Interpretation</h3>
+  <p>The mapping results demonstrate exceptional and comprehensive SDG alignment. The project achieves <strong>maximum five-star ratings across all 17 Sustainable Development Goals</strong>, indicating a robust and well-rounded approach to sustainability. This level of alignment reflects a project that holistically addresses economic prosperity, social well-being, and environmental stewardship.</p>
+
+  <p>The <strong>sustainability balance</strong> is noteworthy: Economic and Social categories each encompass six goals, while the Environmental category covers five goals. This near-even distribution suggests that the project does not disproportionately favor one dimension at the expense of others — a common pitfall in engineering projects that tend to emphasize either economic viability or environmental impact while neglecting social considerations.</p>
+
+  <p>The <strong>cross-domain impact</strong> is particularly significant. Goals such as SDG 9 (Industry, Innovation and Infrastructure) and SDG 11 (Sustainable Cities and Communities) inherently bridge multiple categories, demonstrating that the project's contributions transcend artificial categorical boundaries. Achieving maximum ratings across all categories signifies that the project embodies the <strong>integrated, indivisible nature</strong> of the 2030 Agenda, where progress on one goal reinforces progress on others.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     5. CATEGORY-WISE SUSTAINABILITY ANALYSIS
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="content-page page-break">
+  <div class="page-header">
+    <span>SDG Analysis Report</span>
+    <span>Page 6</span>
+  </div>
+
+  <h1 class="section-title">5. Category-Wise Sustainability Analysis</h1>
+  <hr class="section-divider">
+
+  <h2 class="subsection-title">5.1 Economic Sustainability</h2>
+  <div class="info-box economic">
+    <h4>🪙 Goals: SDG 1, SDG 2, SDG 8, SDG 9, SDG 10, SDG 12</h4>
+    <p>Six goals contributing to economic resilience and inclusive growth.</p>
+  </div>
+
+  <p>The economic sustainability dimension encompasses six goals that collectively address the foundational requirements for long-term economic viability and equitable prosperity. <strong>SDG 1 (No Poverty)</strong> and <strong>SDG 2 (Zero Hunger)</strong> represent the most fundamental economic imperatives, ensuring that project outcomes contribute to poverty alleviation and food security. The project's alignment with these goals indicates that proposed solutions consider accessibility and affordability for economically disadvantaged populations.</p>
+
+  <p><strong>SDG 8 (Decent Work and Economic Growth)</strong> and <strong>SDG 9 (Industry, Innovation and Infrastructure)</strong> evaluate the project's capacity for employment generation and sustainable industrial advancement. High ratings in these areas demonstrate that the project promotes productive employment opportunities and contributes to technological innovation and resilient infrastructure development. <strong>SDG 10 (Reduced Inequalities)</strong> assesses whether project benefits are equitably distributed, while <strong>SDG 12 (Responsible Consumption and Production)</strong> evaluates resource efficiency and waste minimization throughout the project lifecycle.</p>
+
+  <h2 class="subsection-title">5.2 Social Sustainability</h2>
+  <div class="info-box social">
+    <h4>👥 Goals: SDG 3, SDG 4, SDG 5, SDG 11, SDG 16, SDG 17</h4>
+    <p>Six goals advancing human welfare, equity, and institutional strength.</p>
+  </div>
+
+  <p><strong>SDG 3 (Good Health and Well-being)</strong> evaluates the project's impact on public health outcomes, encompassing both direct health interventions and indirect benefits such as reduced pollution or improved living conditions. <strong>SDG 4 (Quality Education)</strong> assesses contributions to educational access, quality, and lifelong learning opportunities — particularly relevant for projects emerging from academic institutions. <strong>SDG 5 (Gender Equality)</strong> examines whether project design and outcomes promote gender equity and empower women and girls.</p>
+
+  <p><strong>SDG 11 (Sustainable Cities and Communities)</strong> evaluates urban sustainability contributions including safer, more resilient, and inclusive settlement planning. <strong>SDG 16 (Peace, Justice and Strong Institutions)</strong> assesses the project's contribution to transparent, accountable, and effective institutions at all levels. Finally, <strong>SDG 17 (Partnerships for the Goals)</strong> evaluates the project's capacity to foster multi-stakeholder collaboration and knowledge sharing, a critical enabler for achieving all other SDGs.</p>
+
+  <h2 class="subsection-title">5.3 Environmental Sustainability</h2>
+  <div class="info-box environmental">
+    <h4>🌿 Goals: SDG 6, SDG 7, SDG 13, SDG 14, SDG 15</h4>
+    <p>Five goals safeguarding Earth's natural systems and biodiversity.</p>
+  </div>
+
+  <p><strong>SDG 6 (Clean Water and Sanitation)</strong> and <strong>SDG 7 (Affordable and Clean Energy)</strong> address fundamental resource access challenges. High ratings indicate that the project either directly improves water and energy access or minimizes its own resource consumption through efficient design. <strong>SDG 13 (Climate Action)</strong> is among the most urgent environmental goals, and strong alignment here signifies that the project accounts for climate mitigation and adaptation in its design and implementation.</p>
+
+  <p><strong>SDG 14 (Life Below Water)</strong> and <strong>SDG 15 (Life on Land)</strong> assess the project's impact on marine and terrestrial ecosystems respectively. While these goals may seem less directly relevant to certain engineering projects, their inclusion ensures a comprehensive environmental impact assessment. Maximum ratings across all five environmental goals demonstrate that the project adopts a <strong>precautionary approach</strong> to ecological impact, actively seeking to protect biodiversity and promote sustainable resource management.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     6. STATISTICAL ANALYSIS + 7. RATING ANALYSIS
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="content-page page-break">
+  <div class="page-header">
+    <span>SDG Analysis Report</span>
+    <span>Page 7</span>
+  </div>
+
+  <h1 class="section-title">6. Statistical Analysis</h1>
+  <hr class="section-divider">
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
+    <table class="report-table no-break">
+      <thead><tr><th>Category</th><th>Number of SDGs</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Economic</strong></td><td>6</td></tr>
+        <tr><td><strong>Social</strong></td><td>6</td></tr>
+        <tr><td><strong>Environmental</strong></td><td>5</td></tr>
+        <tr><td style="font-weight:800; color: var(--sdg-navy);">Total</td><td style="font-weight:800; color: var(--sdg-navy);">17</td></tr>
+      </tbody>
+    </table>
+
+    <table class="report-table no-break">
+      <thead><tr><th>Category</th><th>Percentage</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Economic</strong></td><td>35.29%</td></tr>
+        <tr><td><strong>Social</strong></td><td>35.29%</td></tr>
+        <tr><td><strong>Environmental</strong></td><td>29.42%</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-grid">
+    <div class="chart-container">
+      <h3>Category-Wise SDG Distribution</h3>
+      <canvas id="pieChart" width="350" height="350"></canvas>
+    </div>
+    <div class="chart-container">
+      <h3>SDG Ratings Overview</h3>
+      <canvas id="barChart" width="350" height="350"></canvas>
+    </div>
+  </div>
+
+  <h3 class="sub-subsection-title">Interpretation</h3>
+  <p>The statistical distribution reveals a <strong>well-balanced sustainability profile</strong>. The near-equal distribution between Economic (35.29%) and Social (35.29%) categories, with Environmental sustainability close behind at 29.42%, demonstrates that the project does not exhibit categorical bias. The bar chart confirms uniform five-star performance across all 17 goals, validating the project's <strong>comprehensive sustainability alignment</strong>. This balanced distribution is consistent with best practices in sustainability reporting, where disproportionate emphasis on any single dimension is considered a risk factor for long-term viability.</p>
+
+  <h1 class="section-title" style="margin-top:36px;">7. Rating Analysis</h1>
+  <hr class="section-divider">
+
+  <table class="report-table no-break">
+    <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Total SDGs Evaluated</strong></td><td>17</td></tr>
+      <tr><td><strong>SDGs with 5-Star Ratings</strong></td><td>17</td></tr>
+      <tr><td><strong>SDGs Below 5 Stars</strong></td><td>0</td></tr>
+      <tr><td><strong>Overall Coverage</strong></td><td>100%</td></tr>
+    </tbody>
+  </table>
+
+  <p>The rating analysis confirms <strong>perfect coverage</strong>, with every evaluated SDG receiving the maximum five-star rating. A 100% coverage score indicates that no sustainability dimension has been neglected. This is a significant achievement as most engineering projects typically demonstrate strong alignment with only 5–8 SDGs, with partial alignment in 3–5 additional goals. Achieving comprehensive coverage underscores the project's exceptionally broad sustainability impact and its alignment with the integrated and indivisible nature of the 2030 Agenda.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     8. METHODOLOGY ANALYSIS
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="content-page page-break">
+  <div class="page-header">
+    <span>SDG Analysis Report</span>
+    <span>Page 8</span>
+  </div>
+
+  <h1 class="section-title">8. Methodology Analysis</h1>
+  <hr class="section-divider">
+
+  <p>The SDG Report Generator employs a six-stage assessment workflow, each stage building upon the outputs of its predecessor to produce a comprehensive sustainability evaluation.</p>
+
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="flow-step-box"><span class="step-num">1</span>Abstract Collection</div>
+      <span class="flow-arrow">→</span>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-box"><span class="step-num">2</span>Keyword Extraction</div>
+      <span class="flow-arrow">→</span>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-box"><span class="step-num">3</span>SDG Matching</div>
+      <span class="flow-arrow">→</span>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-box"><span class="step-num">4</span>Rating Calculation</div>
+      <span class="flow-arrow">→</span>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-box"><span class="step-num">5</span>Visualization</div>
+      <span class="flow-arrow">→</span>
+    </div>
+    <div class="flow-step">
+      <div class="flow-step-box"><span class="step-num">6</span>Report Generation</div>
+    </div>
+  </div>
+
+  <ol>
+    <li><strong>Project Abstract Collection:</strong> The system ingests the project abstract and any supplementary documentation provided by the student, establishing the textual corpus for analysis.</li>
+    <li><strong>Keyword Extraction:</strong> Domain-specific keywords and phrases are extracted using pattern matching and frequency analysis, identifying terms with known sustainability relevance.</li>
+    <li><strong>SDG Keyword Matching:</strong> Extracted keywords are compared against a comprehensive SDG keyword dictionary, with each match weighted by relevance and specificity to generate goal-level alignment scores.</li>
+    <li><strong>Rating Calculation:</strong> Alignment scores are normalized and converted to a five-star rating scale, providing intuitive and comparable sustainability metrics.</li>
+    <li><strong>Data Visualization:</strong> Results are rendered as interactive charts, tables, and graphical summaries, facilitating rapid comprehension and stakeholder communication.</li>
+    <li><strong>Automated Report Generation:</strong> All findings are compiled into a professional, publication-quality PDF report with standardized formatting and comprehensive analytical narrative.</li>
+  </ol>
+
+  <div class="al-grid">
+    <div class="al-card advantage">
+      <h4>✅ Advantages</h4>
+      <ul>
+        <li><strong>Fast Evaluation:</strong> Complete SDG analysis within seconds, enabling rapid iteration and feedback.</li>
+        <li><strong>Automation:</strong> Eliminates manual bias and ensures consistent evaluation criteria across all projects.</li>
+        <li><strong>Scalability:</strong> Capable of processing hundreds of projects simultaneously without additional human resources.</li>
+        <li><strong>Easy Implementation:</strong> Intuitive interface requiring minimal training, accessible to students and faculty alike.</li>
+      </ul>
+    </div>
+    <div class="al-card limitation">
+      <h4>⚠️ Limitations</h4>
+      <ul>
+        <li><strong>Keyword Dependency:</strong> Assessment quality is constrained by the comprehensiveness and currency of the SDG keyword dictionary.</li>
+        <li><strong>Context Sensitivity:</strong> Keyword-based matching cannot fully capture semantic nuance, potentially missing indirect or implicit SDG contributions.</li>
+        <li><strong>Limited Impact Assessment:</strong> The system evaluates alignment intent rather than actual measurable impact, which requires field-level data collection.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     9. STRENGTHS & 10. LIMITATIONS
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="content-page page-break">
+  <div class="page-header">
+    <span>SDG Analysis Report</span>
+    <span>Page 9</span>
+  </div>
+
+  <h1 class="section-title">9. Strengths</h1>
+  <hr class="section-divider">
+
+  <div class="point-card strength">
+    <h4>🎯 Full SDG Coverage</h4>
+    <p>The project achieves alignment with all 17 SDGs, demonstrating comprehensive sustainability awareness. This breadth of coverage is rare in academic projects and reflects a deeply integrated approach to sustainable development that considers economic, social, and environmental dimensions equally.</p>
+  </div>
+  <div class="point-card strength">
+    <h4>⚖️ Balanced Sustainability Assessment</h4>
+    <p>The near-equal distribution across Economic (35.29%), Social (35.29%), and Environmental (29.42%) categories ensures that no single dimension dominates the sustainability profile. This balance is critical for long-term viability and mirrors the integrated nature of the UN 2030 Agenda.</p>
+  </div>
+  <div class="point-card strength">
+    <h4>🌍 Strong Global Alignment</h4>
+    <p>Maximum ratings across all goals indicate that the project's objectives are well-aligned with internationally recognized sustainability frameworks, enhancing its credibility and relevance in global academic and professional contexts.</p>
+  </div>
+  <div class="point-card strength">
+    <h4>📊 Effective Visualization System</h4>
+    <p>The integration of pie charts, bar charts, and color-coded tables provides intuitive and visually compelling representations of complex sustainability data, facilitating stakeholder engagement and informed decision-making.</p>
+  </div>
+  <div class="point-card strength">
+    <h4>📚 Academic Usefulness</h4>
+    <p>The standardized report format, with professional tables, analytical narratives, and structured sections, meets the documentation requirements of academic institutions and accreditation bodies, supporting both student assessment and institutional sustainability reporting.</p>
+  </div>
+
+  <h1 class="section-title" style="margin-top:36px;">10. Limitations</h1>
+  <hr class="section-divider">
+
+  <div class="point-card weakness">
+    <h4>🔑 Dependence on Keywords</h4>
+    <p>The assessment methodology relies on keyword matching, which may fail to capture SDG contributions expressed through technical jargon, indirect references, or novel terminology not yet included in the SDG keyword dictionary.</p>
+  </div>
+  <div class="point-card weakness">
+    <h4>📏 No Direct Impact Measurement</h4>
+    <p>The system assesses sustainability alignment and intent but does not measure actual, quantifiable impact. Real-world sustainability outcomes require field data, longitudinal studies, and empirical validation beyond the scope of keyword-based analysis.</p>
+  </div>
+  <div class="point-card weakness">
+    <h4>📊 Uniform Ratings</h4>
+    <p>Achieving uniform five-star ratings across all 17 SDGs may indicate that the assessment criteria are insufficiently granular to differentiate between strong primary alignment and peripheral secondary alignment.</p>
+  </div>
+  <div class="point-card weakness">
+    <h4>🎯 Lack of SDG Prioritization</h4>
+    <p>The current system does not prioritize or weight SDGs based on contextual relevance. Not all SDGs may be equally pertinent to every project, and a more nuanced approach would identify primary and secondary goal alignments.</p>
+  </div>
+  <div class="point-card weakness">
+    <h4>👨‍🔬 Need for Expert Validation</h4>
+    <p>Automated keyword-based assessments should be supplemented by domain expert review to validate sustainability claims, identify false positives, and provide contextual interpretation that algorithms cannot fully replicate.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     11. CONCLUSION, 12. FINAL ASSESSMENT, REFERENCES
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="content-page page-break">
+  <div class="page-header">
+    <span>SDG Analysis Report</span>
+    <span>Page 10</span>
+  </div>
+
+  <h1 class="section-title">11. Conclusion</h1>
+  <hr class="section-divider">
+
+  <p>This Sustainable Development Goals Analysis Report presents a comprehensive evaluation of project sustainability using an automated SDG mapping and assessment methodology. The analysis demonstrates that the evaluated project achieves remarkable alignment with the United Nations' 2030 Agenda for Sustainable Development, successfully mapping to all 17 Sustainable Development Goals.</p>
+
+  <p>Key findings confirm that:</p>
+  <ul>
+    <li><strong>All 17 SDGs</strong> were successfully mapped and evaluated, achieving complete goal coverage.</li>
+    <li><strong>Overall SDG coverage reached 100%</strong>, with no gaps in sustainability alignment.</li>
+    <li><strong>Economic, Social, and Environmental sustainability dimensions</strong> each achieved maximum five-star ratings, reflecting holistic sustainability integration.</li>
+    <li>The project demonstrates <strong>excellent alignment</strong> with the United Nations Sustainable Development Goals, embodying the integrated and indivisible principles of the 2030 Agenda.</li>
+  </ul>
+
+  <div class="grade-box no-break">
+    <div class="grade-label">Final Sustainability Assessment Grade</div>
+    <div class="grade-value">A+</div>
+    <div class="grade-desc">Excellent — Comprehensive SDG Alignment Achieved</div>
+  </div>
+
+  <h1 class="section-title" style="margin-top:36px;">12. Final Assessment Table</h1>
+  <hr class="section-divider">
+
+  <table class="report-table no-break" style="max-width:550px; margin:0 auto;">
+    <thead><tr><th>Metric</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Total SDGs Evaluated</strong></td><td>17</td></tr>
+      <tr><td><strong>Economic Goals</strong></td><td>6</td></tr>
+      <tr><td><strong>Social Goals</strong></td><td>6</td></tr>
+      <tr><td><strong>Environmental Goals</strong></td><td>5</td></tr>
+      <tr><td><strong>5-Star Ratings</strong></td><td>17</td></tr>
+      <tr><td><strong>Overall SDG Coverage</strong></td><td>100%</td></tr>
+      <tr><td style="font-weight:800; color: var(--sdg-navy);">Sustainability Grade</td><td style="font-weight:800; color: var(--sdg-green-dark); font-size:14pt;">Excellent (A+)</td></tr>
+    </tbody>
+  </table>
+
+  <h1 class="section-title" style="margin-top:40px;">References</h1>
+  <hr class="section-divider">
+
+  <ol class="ref-list">
+    <li>United Nations. (2015). <em>Transforming Our World: The 2030 Agenda for Sustainable Development.</em> United Nations General Assembly Resolution A/RES/70/1. Retrieved from https://sdgs.un.org/2030agenda</li>
+    <li>United Nations Department of Economic and Social Affairs. (2024). <em>The Sustainable Development Goals Report 2024.</em> United Nations Publications. Retrieved from https://unstats.un.org/sdgs/report/2024/</li>
+    <li>SDG Report Generator. (2026). <em>Technical Documentation and User Manual.</em> Internal Project Documentation.</li>
+    <li>Project Abstract and Engineering Keyword Mapping Analysis. (2026). <em>SDG Keyword Dictionary and Mapping Methodology.</em> Internal Technical Reference.</li>
+    <li>Sachs, J.D., Lafortune, G., Fuller, G., &amp; Drumm, E. (2023). <em>Sustainable Development Report 2023: Implementing the SDG Stimulus.</em> Dublin: Dublin University Press. doi:10.25546/102924</li>
+  </ol>
+
+  <div class="page-footer">
+    <span>SDG Analysis Report — September 2026</span>
+    <span>Confidential — Academic Use Only</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     CHART.JS SCRIPTS
+     ═══════════════════════════════════════════════════════════════ -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // ─── Pie Chart ────────────────────────────────────
+  const pieCtx = document.getElementById('pieChart').getContext('2d');
+  new Chart(pieCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Economic (35.29%)', 'Social (35.29%)', 'Environmental (29.42%)'],
+      datasets: [{
+        data: [35.29, 35.29, 29.42],
+        backgroundColor: ['#DDA63A', '#0A97D9', '#4C9F38'],
+        borderColor: ['#BF8B2E', '#00689D', '#3F7E44'],
+        borderWidth: 2,
+        hoverOffset: 12,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            padding: 16,
+            font: { family: 'Inter', size: 11, weight: '500' },
+            usePointStyle: true,
+            pointStyleWidth: 16,
+          }
+        },
+        tooltip: {
+          backgroundColor: '#19486A',
+          titleFont: { family: 'Inter', weight: '700' },
+          bodyFont: { family: 'Inter' },
+          padding: 12,
+          cornerRadius: 8,
+        }
+      },
+      cutout: '50%',
+    }
+  });
+
+  // ─── Bar Chart ────────────────────────────────────
+  const barCtx = document.getElementById('barChart').getContext('2d');
+  const sdgColors = [
+    '#E5243B', '#DDA63A', '#4C9F38', '#C5192D', '#FF3A21',
+    '#26BDE2', '#FCC30B', '#A21942', '#FD6925', '#DD1367',
+    '#FD9D24', '#BF8B2E', '#3F7E44', '#0A97D9', '#56C02B',
+    '#00689D', '#19486A'
+  ];
+  new Chart(barCtx, {
+    type: 'bar',
+    data: {
+      labels: ['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17'],
+      datasets: [{
+        label: 'Rating (out of 5)',
+        data: [5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5],
+        backgroundColor: sdgColors,
+        borderColor: sdgColors.map(c => c),
+        borderWidth: 1,
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      indexAxis: 'x',
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 5,
+          ticks: {
+            stepSize: 1,
+            font: { family: 'Inter', size: 10 },
+          },
+          grid: { color: 'rgba(0,0,0,0.06)' },
+          title: {
+            display: true,
+            text: 'Rating (Stars)',
+            font: { family: 'Inter', size: 11, weight: '600' },
+            color: '#19486A',
+          }
+        },
+        x: {
+          ticks: {
+            font: { family: 'Inter', size: 9, weight: '600' },
+          },
+          grid: { display: false },
+          title: {
+            display: true,
+            text: 'SDG Number',
+            font: { family: 'Inter', size: 11, weight: '600' },
+            color: '#19486A',
+          }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#19486A',
+          titleFont: { family: 'Inter', weight: '700' },
+          bodyFont: { family: 'Inter' },
+          padding: 12,
+          cornerRadius: 8,
+          callbacks: {
+            title: function(items) {
+              const names = [
+                'No Poverty','Zero Hunger','Good Health','Quality Education','Gender Equality',
+                'Clean Water','Clean Energy','Decent Work','Innovation','Reduced Inequalities',
+                'Sustainable Cities','Responsible Consumption','Climate Action','Life Below Water',
+                'Life on Land','Peace & Justice','Partnerships'
+              ];
+              return 'SDG ' + items[0].label + ': ' + names[items[0].dataIndex];
+            }
+          }
+        }
+      }
+    }
+  });
+});
+</script>
+
+</body>
+</html>

@@ -1,5 +1,5 @@
 import { analyzeProject, ProjectData } from "../ai/analyzer";
-import { uploadReportToStorage, updateReportStatus } from "./storage";
+import { updateReportStatus } from "./storage";
 
 export async function processReportGeneration(
   projectId: string, 

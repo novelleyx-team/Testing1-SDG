@@ -11,7 +11,7 @@ import { Search, Filter, Download, UserCheck, Shield, GraduationCap, Briefcase }
 import { motion, AnimatePresence } from "framer-motion";
 import { PREDEFINED_USERS } from "@/lib/constants/predefined-users";
 import { Role } from "@/lib/constants/roles";
-import { useAuthStore } from "@/store/auth-store";
+
 
 export function DataCenter() {
   const [activeTab, setActiveTab] = useState<'students' | 'faculty' | 'hods' | 'deans'>('students');

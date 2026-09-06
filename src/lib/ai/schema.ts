@@ -49,6 +49,10 @@ export const aiReportSchema = z.object({
   project: z.object({
     title: z.string(),
     student_name: z.string(),
+    roll_number: z.string().optional(),
+    guide_name: z.string().optional(),
+    department: z.string().optional(),
+    academic_year: z.string().optional(),
     institution: z.string(),
     description: z.string()
   }),

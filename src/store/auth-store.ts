@@ -72,7 +72,7 @@ export const useAuthStore = create<AuthState>()(
               passkey: user.passkey
             })
           });
-          set((state) => ({ 
+          set(() => ({ 
             user: user 
           }));
         } catch (e) {

@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { HelpCircle, FileText, Send, Settings, Download } from "lucide-react";
+import { HelpCircle, FileText, Send, Settings } from "lucide-react";
 import { PdfGeneratorButton } from "@/components/ui/PdfGeneratorButton";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";

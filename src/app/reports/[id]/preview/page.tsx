@@ -10,7 +10,7 @@ export default async function PreviewPage({ params }: { params: { id: string } }
   }
 
   const data = await res.json();
-  const { report, project, student_name } = data;
+  const { report, project, student_name, guide_name, department } = data;
   
   if (!report || !report.report_data) {
     return notFound();
@@ -25,20 +25,24 @@ export default async function PreviewPage({ params }: { params: { id: string } }
     project: {
       title: project?.title || "Untitled Project",
       student_name: student_name || "Unknown",
-      institution: "Novelleyx University", // Or from DB if available
+      guide_name: guide_name || "Not Assigned",
+      department: department || project?.department || "Unknown",
+      roll_number: project?.student_id || "",
+      academic_year: "2026-27",
+      institution: "MLR Institute of Technology",
       description: project?.abstract || "No description provided",
     },
     scores: {
       overall: reportData?.sdg_scores?.["SDG Score"] || reportData?.impact?.overall_score || 0,
       sdg_alignment: reportData?.impact?.overall_score || 0,
-      evidence: 85, // Mock default or mapped from real data
+      evidence: 85,
       impact: reportData?.impact?.overall_score || 0,
       measurability: 80,
       scalability: 75,
       sustainability: 85
     },
     executive_summary: reportData?.summary || reportData?.analysis?.project_summary || "No summary provided.",
-    sdg_analysis: (reportData?.analysis?.sdg_analysis || []).map((sdg: any) => ({
+    sdg_analysis: (reportData?.analysis?.sdg_analysis || []).map((sdg: { sdg_name: string; confidence_score?: number; justification?: string }) => ({
       sdg_id: sdg.sdg_name.split(':')[0] || sdg.sdg_name,
       name: sdg.sdg_name,
       classification: "Primary",
@@ -62,5 +66,5 @@ export default async function PreviewPage({ params }: { params: { id: string } }
     conclusion: "The project aligns well with the identified SDGs."
   };
 
-  return <ReportTemplate report={mappedReport as any} />;
+  return <ReportTemplate report={mappedReport as unknown as React.ComponentProps<typeof ReportTemplate>["report"]} />;
 }

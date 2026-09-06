@@ -30,10 +30,11 @@ export function PdfGeneratorButton({ reportId, className = "", text = "Download 
       
       // Poll for status
       pollStatus(job_id);
-    } catch (err: any) {
-      console.error(err);
+    } catch (err) {
+      const e = err as Error;
+      console.error(e);
       setStatus("error");
-      setErrorMsg(err.message || "An error occurred");
+      setErrorMsg(e.message || "An error occurred");
     }
   };
 
@@ -54,14 +55,15 @@ export function PdfGeneratorButton({ reportId, className = "", text = "Download 
         setStatus("error");
         setErrorMsg(data.error || "Generation failed");
       } else {
-        setStatus(data.status.toLowerCase() as any);
+        setStatus(data.status.toLowerCase() as "idle" | "queued" | "processing" | "completed" | "error");
         // Continue polling
         setTimeout(() => pollStatus(jobId), 2000);
       }
-    } catch (err: any) {
-      console.error(err);
+    } catch (err) {
+      const e = err as Error;
+      console.error(e);
       setStatus("error");
-      setErrorMsg(err.message);
+      setErrorMsg(e.message);
     }
   };
 

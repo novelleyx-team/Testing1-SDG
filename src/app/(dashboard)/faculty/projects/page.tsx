@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Button } from "@/components/ui/button"
 import { useAuthStore } from "@/store/auth-store"
 import { useProjectsStore } from "@/store/projects-store"
-import { FolderOpen, Eye, Download } from "lucide-react"
+import { FolderOpen, Eye } from "lucide-react"
 import { PdfGeneratorButton } from "@/components/ui/PdfGeneratorButton"
 import { StatusBadge } from "@/components/shared/status-badge"
 

@@ -295,16 +295,36 @@ async def get_report(project_id: str):
     project = cursor.fetchone()
     
     student_name = "Unknown"
-    if project and project["student_id"]:
-        cursor.execute("SELECT name FROM users WHERE id = %s", (project["student_id"],))
-        user = cursor.fetchone()
-        if user:
-            student_name = user["name"]
+    guide_name = "Unknown"
+    department = "Unknown"
+    
+    if project:
+        # Fetch student info
+        if project.get("student_id"):
+            cursor.execute("SELECT name, department FROM users WHERE id = %s", (project["student_id"],))
+            user = cursor.fetchone()
+            if user:
+                student_name = user["name"]
+                if user.get("department"):
+                    department = user["department"]
+        
+        # Fetch guide/faculty info
+        if project.get("faculty_id"):
+            cursor.execute("SELECT name FROM users WHERE id = %s", (project["faculty_id"],))
+            faculty = cursor.fetchone()
+            if faculty:
+                guide_name = faculty["name"]
+        
+        # Use project-level department as fallback
+        if department == "Unknown" and project.get("department"):
+            department = project["department"]
             
     return {
         "report": report,
         "project": project,
-        "student_name": student_name
+        "student_name": student_name,
+        "guide_name": guide_name,
+        "department": department
     }
 
 # --- PDF GENERATION API ---

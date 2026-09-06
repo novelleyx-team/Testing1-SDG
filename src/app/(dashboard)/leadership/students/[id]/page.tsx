@@ -1,9 +1,9 @@
 "use client";
 
 import { use } from "react";
-import { useAuthStore } from "@/store/auth-store";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, Mail, GraduationCap, MapPin, ArrowLeft, Briefcase, Award } from "lucide-react";
+import { User, Mail, MapPin, ArrowLeft, Briefcase, Award } from "lucide-react";
 import Link from "next/link";
 import { PREDEFINED_USERS } from "@/lib/constants/predefined-users";
 
