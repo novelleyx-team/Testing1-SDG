@@ -134,20 +134,33 @@ async def sdg_recommend(project: ProjectDetails):
 
 @app.post("/api/sdg/report")
 async def sdg_report(project: ProjectDetails):
-    """Aggregates all analyses into a comprehensive structured JSON report."""
+    """Aggregates all analyses into a comprehensive structured JSON report using the 16-stage pipeline."""
     try:
-        analysis = analyze_and_map_sdgs(project)
-        impact = generate_impact_score(project, analysis)
-        recs = generate_recommendations(project, analysis)
-        report = generate_full_report(project, analysis, impact, recs)
+        from pipeline.orchestrator import PipelineOrchestrator
+        from pipeline.provider import RealAIProvider
         
-        return {
-            "analysis": analysis,
-            "impact": impact,
-            "recommendations": recs,
-            "report": report
+        # Instantiate the providers and orchestrator
+        # We use RealAIProvider for both SLM and LLM currently, but logically separated.
+        provider = RealAIProvider()
+        orchestrator = PipelineOrchestrator(slm_provider=provider, llm_provider=provider)
+        
+        # Convert ProjectDetails to dict for the pipeline
+        raw_input = {
+            "project_name": project.title,
+            "project_description": project.abstract,
+            "measurable_results": project.outcomes,
+            "resources_used": ", ".join(project.technologies) if project.technologies else None,
+            "future_plans": project.future_goals
         }
+        
+        # Run the 16-stage pipeline
+        report = orchestrator.run_pipeline(raw_input)
+        
+        # Return the strictly typed Pydantic report as a dict
+        return report.dict()
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":

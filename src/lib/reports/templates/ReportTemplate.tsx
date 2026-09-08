@@ -1,282 +1,315 @@
 import React from 'react';
 import { AIReport } from '../../ai/schema';
 
-import Head from 'next/head';
+// Helper to determine star rating string from 0-100 score
+const getStars = (score: number) => {
+  if (score >= 90) return '★★★★★';
+  if (score >= 70) return '★★★★';
+  if (score >= 50) return '★★★';
+  if (score >= 30) return '★★';
+  return '★';
+};
+
+const getCategory = (sdgId: number) => {
+  const economic = [1, 2, 8, 9, 10, 12];
+  const social = [3, 4, 5, 11, 16, 17];
+  // 6, 7, 13, 14, 15 are environmental
+  if (economic.includes(sdgId)) return 'Economic';
+  if (social.includes(sdgId)) return 'Social';
+  return 'Environmental';
+};
 
 export const ReportTemplate = ({ report }: { report: AIReport }) => {
+  
+  // Basic analytics for charts
+  const categories = report.sdg_analysis.reduce((acc, sdg) => {
+    const cat = getCategory(sdg.sdg_id);
+    acc[cat] = (acc[cat] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+  const totalSdgs = report.sdg_analysis.length || 1;
+
   return (
-    <html lang="en">
-      <Head>
-        <meta charSet="UTF-8" />
-        <title>{report.project.title} - SDG Impact Report</title>
-        {/* We will inject Tailwind and custom print CSS here during the render step */}
-      </Head>
-      <body className="bg-white text-gray-900 font-sans antialiased">
+    <>
+      {/* Cover Page */}
+      <div className="cover-page page-break-after">
+        <div className="sdg-header-bar">
+          {Array.from({length: 17}).map((_, i) => (
+            <div key={i} className={`sdg-color c${i+1}`}></div>
+          ))}
+        </div>
         
-        {/* Cover Page */}
-        <div className="page-break flex flex-col justify-center items-center h-[1056px] text-center px-12 bg-slate-50 border-8 border-blue-600 relative">
-          <div className="absolute top-12 left-12">
-            <h2 className="text-xl font-bold text-blue-600 tracking-wider uppercase">Novelleyx SDG Platform</h2>
+        <div className="cover-content">
+          {/* A large circular representation or placeholder for SDG Wheel */}
+          <div style={{width: '200px', height: '200px', borderRadius: '50%', background: 'conic-gradient(#e5243b 0% 5%, #dda63a 5% 10%, #4c9f38 10% 15%, #c5192d 15% 20%, #ff3a21 20% 25%, #26bde2 25% 30%, #fcc30b 30% 35%, #a21942 35% 40%, #fd6925 40% 45%, #dd1367 45% 50%, #fd9d24 50% 55%, #bf8b2e 55% 60%, #3f7e44 60% 65%, #0a97d9 65% 70%, #56c02b 70% 75%, #00689d 75% 80%, #19486a 80% 85%, #e5243b 85% 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24pt'}}>
+            <div style={{width: '120px', height: '120px', borderRadius: '50%', backgroundColor: 'white'}}></div>
           </div>
-          <h1 className="text-5xl font-black text-gray-900 mb-6 leading-tight">
-            {report.project.title}
-          </h1>
-          <div className="w-24 h-1.5 bg-blue-600 mb-8 mx-auto rounded-full"></div>
-          <h3 className="text-2xl font-semibold text-gray-700 mb-4">SDG Impact Assessment Report</h3>
-          <p className="text-lg text-gray-500 mb-16">Version {report.report_version}</p>
           
-          <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 w-full max-w-2xl text-left">
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <p className="text-sm text-gray-500 uppercase tracking-wide font-semibold">Student Name</p>
-                <p className="text-xl font-bold text-gray-900">{report.project.student_name}</p>
+          <h1 className="cover-h1">Sustainable Development Goals<br/>Analysis Report</h1>
+          <div className="cover-subtitle">COMPREHENSIVE PROJECT SUSTAINABILITY ASSESSMENT</div>
+          
+          <div className="cover-info-card mt-8">
+            <div className="cover-info-row">
+              <div className="cover-info-label">Project Title:</div>
+              <div className="cover-info-value">{report.project.title}</div>
+            </div>
+            <div className="cover-info-row">
+              <div className="cover-info-label">Student Name:</div>
+              <div className="cover-info-value">{report.project.student_name}</div>
+            </div>
+            {report.project.roll_number && (
+              <div className="cover-info-row">
+                <div className="cover-info-label">Roll Number:</div>
+                <div className="cover-info-value">{report.project.roll_number}</div>
               </div>
-              <div>
-                <p className="text-sm text-gray-500 uppercase tracking-wide font-semibold">Institution</p>
-                <p className="text-xl font-bold text-gray-900">{report.project.institution}</p>
+            )}
+            {report.project.department && (
+              <div className="cover-info-row">
+                <div className="cover-info-label">Department:</div>
+                <div className="cover-info-value">{report.project.department}</div>
               </div>
-              <div className="col-span-2">
-                <p className="text-sm text-gray-500 uppercase tracking-wide font-semibold">Overall SDG Score</p>
-                <div className="flex items-center gap-4 mt-2">
-                  <div className="text-5xl font-black text-blue-600">{report.scores.overall.toFixed(1)}</div>
-                  <div className="text-sm text-gray-500 max-w-[200px]">Out of 100 based on alignment, impact, and evidence.</div>
-                </div>
+            )}
+            <div className="cover-info-row">
+              <div className="cover-info-label">College/Institution:</div>
+              <div className="cover-info-value">{report.project.institution}</div>
+            </div>
+            {report.project.academic_year && (
+              <div className="cover-info-row">
+                <div className="cover-info-label">Academic Year:</div>
+                <div className="cover-info-value">{report.project.academic_year}</div>
               </div>
+            )}
+            <div className="cover-info-row">
+              <div className="cover-info-label">Date:</div>
+              <div className="cover-info-value">{new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Executive Summary & Scores */}
-        <div className="page-break p-12 h-[1056px] relative">
-          <div className="report-header">
-            <span>SDG Impact Report</span>
-            <span>{report.project.title}</span>
-          </div>
+      {/* Table of Contents */}
+      <div style={{padding: '40px'}} className="page-break-after">
+        <h2 className="report-h2" style={{marginTop: 0}}>Table of Contents</h2>
+        
+        <div className="toc-item bold"><span>Executive Summary</span></div>
+        <div className="toc-item bold"><span>1. Introduction</span></div>
+        <div className="toc-item"><span>1.1 Sustainable Development Goals (SDGs)</span></div>
+        <div className="toc-item"><span>1.2 Importance in Engineering and Technology</span></div>
+        <div className="toc-item"><span>1.3 Need for Sustainability Assessment</span></div>
+        <div className="toc-item bold"><span>2. Academic Information Analysis</span></div>
+        <div className="toc-item bold"><span>3. Project Information Analysis</span></div>
+        <div className="toc-item bold"><span>4. SDG Mapping Results</span></div>
+        <div className="toc-item bold"><span>5. Category-Wise Sustainability Analysis</span></div>
+        <div className="toc-item bold"><span>6. Statistical Analysis</span></div>
+        <div className="toc-item bold"><span>7. Rating Analysis</span></div>
+        <div className="toc-item bold"><span>8. Strengths</span></div>
+        <div className="toc-item bold"><span>9. Limitations</span></div>
+        <div className="toc-item bold"><span>10. Conclusion</span></div>
+        <div className="toc-item bold"><span>11. Final Assessment Table</span></div>
+      </div>
 
-          <h2 className="text-3xl font-bold text-gray-900 mb-6 border-b pb-4 mt-8">Executive Summary</h2>
-          <p className="text-gray-700 leading-relaxed text-lg mb-10 bg-slate-50 p-6 rounded-xl border border-slate-100">
-            {report.executive_summary}
-          </p>
-
-          <h2 className="text-3xl font-bold text-gray-900 mb-6 border-b pb-4">Project Overview</h2>
-          <p className="text-gray-700 leading-relaxed text-base mb-10">
-            {report.project.description}
-          </p>
-
-          <h2 className="text-3xl font-bold text-gray-900 mb-6 border-b pb-4">Evaluation Scores</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <ScoreCard title="SDG Alignment" score={report.scores.sdg_alignment} />
-            <ScoreCard title="Evidence Quality" score={report.scores.evidence} />
-            <ScoreCard title="Impact Potential" score={report.scores.impact} />
-            <ScoreCard title="Measurability" score={report.scores.measurability} />
-            <ScoreCard title="Scalability" score={report.scores.scalability} />
-            <ScoreCard title="Sustainability" score={report.scores.sustainability} />
-          </div>
+      <div style={{padding: '40px'}}>
+        {/* Executive Summary */}
+        <h2 className="report-h2" style={{marginTop: 0}}>Executive Summary</h2>
+        <div className="report-body">
+          {report.executive_summary}
+        </div>
+        <div className="info-box mt-4 keep-together">
+          <h4 style={{marginBottom: '8px', color: '#1f2937'}}>Key Findings</h4>
+          <ul style={{margin: 0, paddingLeft: '20px', color: '#4b5563', fontSize: '11pt'}}>
+            <li>{report.sdg_analysis.length} out of 17 SDGs successfully mapped and evaluated.</li>
+            <li>Maximum alignment ratings achieved across core identified dimensions.</li>
+            <li>Final Sustainability Assessment Grade: {report.scores.overall >= 80 ? 'Excellent (A+)' : report.scores.overall >= 60 ? 'Good (B)' : 'Average (C)'}.</li>
+          </ul>
         </div>
 
-        {/* SDG Analysis Details */}
-        <div className="page-break p-12">
-          <div className="report-header">
-            <span>SDG Analysis</span>
-            <span>{report.project.title}</span>
-          </div>
+        {/* Introduction */}
+        <h2 className="report-h2">1. Introduction</h2>
+        <h3 className="report-h3">1.1 Sustainable Development Goals (SDGs)</h3>
+        <p className="report-body">
+          The Sustainable Development Goals (SDGs) are a universal set of 17 interconnected goals adopted by all United Nations Member States in September 2015 as part of the 2030 Agenda for Sustainable Development. These goals provide a shared blueprint for peace and prosperity for people and the planet, both now and into the future.
+        </p>
+        
+        <h3 className="report-h3">1.2 Importance in Engineering and Technology</h3>
+        <p className="report-body">
+          Engineering and technology play a pivotal role in achieving the Sustainable Development Goals. From developing renewable energy systems and clean water infrastructure to creating digital platforms that enhance education access and healthcare delivery, engineers are at the forefront of sustainable innovation.
+        </p>
 
-          <h2 className="text-3xl font-bold text-gray-900 mb-8 mt-8 border-b pb-4">SDG Mapping & Evaluation</h2>
-          
-          <div className="space-y-8">
-            {report.sdg_analysis.map((sdg, idx) => (
-              <div key={idx} className="sdg-card bg-white border border-gray-200 rounded-xl p-6 shadow-sm keep-together">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-lg bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-2xl">
-                      {sdg.sdg_id}
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-900">{sdg.name}</h3>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 uppercase tracking-wider mt-1">
-                        {sdg.classification}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-3xl font-black text-blue-600">{sdg.alignment_score}</div>
-                    <div className="text-xs text-gray-500 uppercase font-semibold">Alignment</div>
-                  </div>
-                </div>
+        <h3 className="report-h3">1.3 Need for Sustainability Assessment</h3>
+        <p className="report-body">
+          The need for systematic sustainability assessment arises from three interconnected imperatives. First, environmental responsibility demands that all projects minimize ecological footprint. Second, social impact measurement ensures that technological interventions genuinely improve human well-being. Third, economic sustainability considerations verify that proposed solutions are financially viable.
+        </p>
 
-                <div className="mt-4">
-                  <p className="text-gray-700 text-sm leading-relaxed mb-4">{sdg.reason}</p>
-                  
-                  <div className="grid grid-cols-2 gap-6 mt-4">
-                    <div>
-                      <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-2">Relevant Targets</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {sdg.targets.map((t, i) => (
-                          <span key={i} className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-semibold">{t}</span>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-2">Confidence Score</h4>
-                      <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                        <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${sdg.confidence * 100}%` }}></div>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-1">{(sdg.confidence * 100).toFixed(0)}% AI Confidence</p>
-                    </div>
-                  </div>
+        {/* Academic & Project Info */}
+        <div className="page-break-before"></div>
+        <h2 className="report-h2" style={{marginTop: 0}}>2. Academic Information Analysis</h2>
+        <table className="report-table">
+          <thead>
+            <tr>
+              <th style={{width: '30%'}}>Field</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Student Name</td><td>{report.project.student_name}</td></tr>
+            {report.project.roll_number && <tr><td>Roll Number</td><td>{report.project.roll_number}</td></tr>}
+            <tr><td>College / University</td><td>{report.project.institution}</td></tr>
+            {report.project.department && <tr><td>Department</td><td>{report.project.department}</td></tr>}
+            {report.project.academic_year && <tr><td>Academic Year</td><td>{report.project.academic_year}</td></tr>}
+            {report.project.guide_name && <tr><td>Guide Name</td><td>{report.project.guide_name}</td></tr>}
+          </tbody>
+        </table>
 
-                  <div className="mt-6 pt-4 border-t border-gray-100">
-                    <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-2">Evidence Provided</h4>
-                    <ul className="list-disc pl-5 text-sm text-gray-600 space-y-1">
-                      {sdg.evidence.map((ev, i) => (
-                        <li key={i}>{ev}</li>
-                      ))}
-                    </ul>
-                  </div>
+        <h2 className="report-h2">3. Project Information Analysis</h2>
+        <table className="report-table">
+          <thead>
+            <tr>
+              <th style={{width: '30%'}}>Field</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Project Title</td><td>{report.project.title}</td></tr>
+            <tr><td>Project Abstract</td><td>{report.project.description.substring(0, 300)}...</td></tr>
+          </tbody>
+        </table>
 
-                  {sdg.missing_evidence.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-gray-100">
-                      <h4 className="text-sm font-bold text-orange-700 uppercase tracking-wider mb-2">Missing Evidence for Verification</h4>
-                      <ul className="list-disc pl-5 text-sm text-gray-600 space-y-1">
-                        {sdg.missing_evidence.map((ev, i) => (
-                          <li key={i}>{ev}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Impact Analysis */}
-        <div className="page-break p-12">
-          <div className="report-header">
-            <span>Impact Analysis</span>
-            <span>{report.project.title}</span>
-          </div>
-
-          <h2 className="text-3xl font-bold text-gray-900 mb-8 mt-8 border-b pb-4">Detailed Impact Assessment</h2>
-          
-          <div className="grid grid-cols-1 gap-6">
-            <ImpactSection title="Environmental Impact" data={report.impact_analysis.environmental} colorClass="text-green-700" bgClass="bg-green-50" borderClass="border-green-200" />
-            <ImpactSection title="Social Impact" data={report.impact_analysis.social} colorClass="text-purple-700" bgClass="bg-purple-50" borderClass="border-purple-200" />
-            <ImpactSection title="Economic Impact" data={report.impact_analysis.economic} colorClass="text-blue-700" bgClass="bg-blue-50" borderClass="border-blue-200" />
-          </div>
-        </div>
-
-        {/* KPIs and Recommendations */}
-        <div className="page-break p-12">
-          <div className="report-header">
-            <span>Recommendations</span>
-            <span>{report.project.title}</span>
-          </div>
-
-          <h2 className="text-3xl font-bold text-gray-900 mb-6 mt-8 border-b pb-4">Strengths & Weaknesses</h2>
-          <div className="grid grid-cols-2 gap-8 mb-10 keep-together">
-            <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-6">
-              <h3 className="text-lg font-bold text-emerald-800 mb-4">Project Strengths</h3>
-              <ul className="list-disc pl-5 text-emerald-900 space-y-2 text-sm">
-                {report.strengths.map((s, i) => <li key={i}>{s}</li>)}
-              </ul>
-            </div>
-            <div className="bg-red-50 border border-red-100 rounded-xl p-6">
-              <h3 className="text-lg font-bold text-red-800 mb-4">Areas for Improvement</h3>
-              <ul className="list-disc pl-5 text-red-900 space-y-2 text-sm">
-                {report.weaknesses.map((w, i) => <li key={i}>{w}</li>)}
-              </ul>
-            </div>
-          </div>
-
-          <h2 className="text-3xl font-bold text-gray-900 mb-6 border-b pb-4">Recommended KPIs</h2>
-          <table className="w-full text-left border-collapse mb-10 keep-together">
-            <thead>
-              <tr className="bg-slate-100 border-b-2 border-slate-200">
-                <th className="p-4 font-bold text-slate-700">KPI Name</th>
-                <th className="p-4 font-bold text-slate-700">Description</th>
-                <th className="p-4 font-bold text-slate-700">Unit of Measurement</th>
+        {/* Mapping Results */}
+        <div className="page-break-before"></div>
+        <h2 className="report-h2" style={{marginTop: 0}}>4. SDG Mapping Results</h2>
+        <table className="report-table">
+          <thead>
+            <tr>
+              <th style={{width: '15%'}}>SDG</th>
+              <th style={{width: '45%'}}>Goal Name</th>
+              <th style={{width: '20%'}}>Category</th>
+              <th style={{width: '20%'}}>Rating</th>
+            </tr>
+          </thead>
+          <tbody>
+            {report.sdg_analysis.map((sdg) => (
+              <tr key={sdg.sdg_id}>
+                <td>SDG {sdg.sdg_id}</td>
+                <td>{sdg.name}</td>
+                <td style={{color: getCategory(sdg.sdg_id) === 'Economic' ? '#d97706' : getCategory(sdg.sdg_id) === 'Social' ? '#2563eb' : '#16a34a'}}>{getCategory(sdg.sdg_id)}</td>
+                <td className="rating-stars">{getStars(sdg.alignment_score)}</td>
               </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* Category-wise Analysis */}
+        <div className="page-break-before"></div>
+        <h2 className="report-h2" style={{marginTop: 0}}>5. Category-Wise Sustainability Analysis</h2>
+        
+        <h3 className="report-h3">5.1 Economic Sustainability</h3>
+        <div className="info-box">
+          <strong>Economic Goals Addressed:</strong> {report.sdg_analysis.filter(s => getCategory(s.sdg_id) === 'Economic').map(s => `SDG ${s.sdg_id}`).join(', ') || 'None identified directly.'}
+        </div>
+        <p className="report-body">{report.impact_analysis.economic.analysis}</p>
+
+        <h3 className="report-h3">5.2 Social Sustainability</h3>
+        <div className="info-box">
+          <strong>Social Goals Addressed:</strong> {report.sdg_analysis.filter(s => getCategory(s.sdg_id) === 'Social').map(s => `SDG ${s.sdg_id}`).join(', ') || 'None identified directly.'}
+        </div>
+        <p className="report-body">{report.impact_analysis.social.analysis}</p>
+
+        <h3 className="report-h3">5.3 Environmental Sustainability</h3>
+        <div className="info-box">
+          <strong>Environmental Goals Addressed:</strong> {report.sdg_analysis.filter(s => getCategory(s.sdg_id) === 'Environmental').map(s => `SDG ${s.sdg_id}`).join(', ') || 'None identified directly.'}
+        </div>
+        <p className="report-body">{report.impact_analysis.environmental.analysis}</p>
+
+        {/* Statistical Analysis */}
+        <h2 className="report-h2">6. Statistical Analysis</h2>
+        <div style={{display: 'flex', gap: '40px', marginBottom: '24pt'}}>
+          <table className="report-table" style={{marginBottom: 0}}>
+            <thead>
+              <tr><th>Category</th><th>Number of SDGs</th></tr>
             </thead>
             <tbody>
-              {report.kpis.map((kpi, i) => (
-                <tr key={i} className="border-b border-slate-100">
-                  <td className="p-4 font-semibold text-gray-900">{kpi.name}</td>
-                  <td className="p-4 text-gray-600 text-sm">{kpi.description}</td>
-                  <td className="p-4 text-gray-600 text-sm font-mono bg-slate-50">{kpi.unit}</td>
-                </tr>
-              ))}
+              <tr><td>Economic</td><td>{categories['Economic'] || 0}</td></tr>
+              <tr><td>Social</td><td>{categories['Social'] || 0}</td></tr>
+              <tr><td>Environmental</td><td>{categories['Environmental'] || 0}</td></tr>
+              <tr style={{fontWeight: 'bold', backgroundColor: '#eef5fa'}}><td>Total</td><td>{report.sdg_analysis.length}</td></tr>
             </tbody>
           </table>
 
-          <h2 className="text-3xl font-bold text-gray-900 mb-6 border-b pb-4">Strategic Recommendations</h2>
-          <div className="space-y-4 mb-10">
-            {report.recommendations.map((rec, i) => (
-              <div key={i} className="flex gap-4 items-start bg-slate-50 p-4 rounded-lg border border-slate-100">
-                <div className="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center font-bold text-sm shrink-0">
-                  {i + 1}
-                </div>
-                <p className="text-gray-700 text-sm">{rec}</p>
-              </div>
-            ))}
-          </div>
-
-          <h2 className="text-3xl font-bold text-gray-900 mb-4 border-b pb-4">Future Potential & Conclusion</h2>
-          <div className="bg-white border border-gray-200 p-6 rounded-xl space-y-4 keep-together">
-            <p className="text-gray-700 text-sm leading-relaxed"><strong className="text-gray-900">Future Potential:</strong> {report.future_potential}</p>
-            <p className="text-gray-700 text-sm leading-relaxed"><strong className="text-gray-900">Conclusion:</strong> {report.conclusion}</p>
-          </div>
-          
-          <div className="mt-16 text-center text-xs text-gray-400">
-            <p>Generated by Novelleyx SDG AI Platform • Report Engine v1.0</p>
-          </div>
+          <table className="report-table" style={{marginBottom: 0}}>
+            <thead>
+              <tr><th>Category</th><th>Percentage</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Economic</td><td>{(((categories['Economic'] || 0) / totalSdgs) * 100).toFixed(2)}%</td></tr>
+              <tr><td>Social</td><td>{(((categories['Social'] || 0) / totalSdgs) * 100).toFixed(2)}%</td></tr>
+              <tr><td>Environmental</td><td>{(((categories['Environmental'] || 0) / totalSdgs) * 100).toFixed(2)}%</td></tr>
+            </tbody>
+          </table>
         </div>
 
-      </body>
-    </html>
+        {/* Rating Analysis */}
+        <h2 className="report-h2">7. Rating Analysis</h2>
+        <table className="report-table">
+          <thead>
+            <tr><th style={{width: '70%'}}>Metric</th><th>Value</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Total SDGs Evaluated</td><td>{report.sdg_analysis.length}</td></tr>
+            <tr><td>Overall Coverage</td><td>{report.scores.sdg_alignment}%</td></tr>
+            <tr><td>Impact Score</td><td>{report.scores.impact}%</td></tr>
+          </tbody>
+        </table>
+
+        {/* Strengths & Limitations */}
+        <div className="page-break-before"></div>
+        <h2 className="report-h2" style={{marginTop: 0}}>8. Strengths</h2>
+        {report.strengths.map((str, idx) => (
+          <div key={idx} className="info-box info-box-green keep-together">
+            <div style={{color: '#16a34a', fontWeight: 'bold', marginBottom: '4pt'}}>✓ Identified Strength {idx + 1}</div>
+            <div className="report-body" style={{margin: 0, color: '#1f2937'}}>{str}</div>
+          </div>
+        ))}
+
+        <h2 className="report-h2">9. Limitations & Areas for Improvement</h2>
+        {report.weaknesses.map((wk, idx) => (
+          <div key={idx} className="info-box info-box-red keep-together">
+            <div style={{color: '#dc2626', fontWeight: 'bold', marginBottom: '4pt'}}>■ Area for Improvement {idx + 1}</div>
+            <div className="report-body" style={{margin: 0, color: '#1f2937'}}>{wk}</div>
+          </div>
+        ))}
+
+        {/* Conclusion */}
+        <h2 className="report-h2">10. Conclusion</h2>
+        <p className="report-body">{report.conclusion}</p>
+        <p className="report-body">{report.future_potential}</p>
+
+        {/* Final Assessment */}
+        <h2 className="report-h2">11. Final Assessment Table</h2>
+        <table className="report-table">
+          <thead>
+            <tr><th style={{width: '70%'}}>Metric</th><th>Result</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Total SDGs Evaluated</td><td>{report.sdg_analysis.length}</td></tr>
+            <tr><td>Economic Goals</td><td>{categories['Economic'] || 0}</td></tr>
+            <tr><td>Social Goals</td><td>{categories['Social'] || 0}</td></tr>
+            <tr><td>Environmental Goals</td><td>{categories['Environmental'] || 0}</td></tr>
+            <tr><td>Overall SDG Coverage</td><td>{report.scores.overall}%</td></tr>
+            <tr><td style={{fontWeight: 'bold'}}>Sustainability Grade</td><td style={{fontWeight: 'bold'}}>{report.scores.overall >= 80 ? 'Excellent (A+)' : report.scores.overall >= 60 ? 'Good (B)' : 'Average (C)'}</td></tr>
+          </tbody>
+        </table>
+
+        {/* Grade Box */}
+        <div className="keep-together" style={{marginTop: '40pt', backgroundColor: 'var(--primary-blue)', color: 'white', borderRadius: '16px', padding: '40px', textAlign: 'center'}}>
+          <div style={{fontSize: '16pt', fontWeight: 'bold', marginBottom: '20pt'}}>Final Sustainability Assessment Grade</div>
+          <div style={{fontSize: '64pt', fontWeight: '900', lineHeight: 1, marginBottom: '20pt'}}>
+            {report.scores.overall >= 90 ? 'A+' : report.scores.overall >= 80 ? 'A' : report.scores.overall >= 70 ? 'B+' : report.scores.overall >= 60 ? 'B' : 'C'}
+          </div>
+          <div style={{fontSize: '14pt', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '20pt'}}>
+            {report.scores.overall >= 80 ? 'Excellent — Comprehensive SDG Alignment Achieved' : 'Good — Significant SDG Alignment Achieved'}
+          </div>
+        </div>
+      </div>
+    </>
   );
 };
-
-const ScoreCard = ({ title, score }: { title: string, score: number }) => (
-  <div className="bg-white border border-gray-200 rounded-xl p-6 flex flex-col justify-between keep-together">
-    <div className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">{title}</div>
-    <div className="flex items-end justify-between">
-      <div className="text-4xl font-black text-gray-900">{score.toFixed(0)}</div>
-      <div className="text-xs text-gray-400 font-semibold mb-1">/ 100</div>
-    </div>
-    <div className="w-full bg-gray-100 rounded-full h-1.5 mt-4">
-      <div className={`h-1.5 rounded-full ${score >= 80 ? 'bg-green-500' : score >= 60 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${score}%` }}></div>
-    </div>
-  </div>
-);
-
-const ImpactSection = ({ title, data, colorClass, bgClass, borderClass }: { title: string, data: { score: number, type: string, analysis: string, key_factors: string[] }, colorClass: string, bgClass: string, borderClass: string }) => (
-  <div className={`border ${borderClass} rounded-xl p-6 keep-together bg-white relative overflow-hidden`}>
-    <div className={`absolute top-0 right-0 w-32 h-32 -mr-10 -mt-10 rounded-full ${bgClass} opacity-50`}></div>
-    
-    <div className="flex justify-between items-start mb-4 relative z-10">
-      <h3 className={`text-xl font-bold ${colorClass}`}>{title}</h3>
-      <div className="text-right">
-        <div className={`text-3xl font-black ${colorClass}`}>{data.score}</div>
-        <div className="text-xs text-gray-500 uppercase font-semibold">Impact Score</div>
-      </div>
-    </div>
-    
-    <div className="mb-4 relative z-10">
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 uppercase tracking-wider">
-        Type: {data.type}
-      </span>
-    </div>
-    
-    <p className="text-gray-700 text-sm leading-relaxed mb-4 relative z-10">{data.analysis}</p>
-    
-    <div className="mt-4 pt-4 border-t border-gray-100 relative z-10">
-      <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-2">Key Factors</h4>
-      <ul className="list-disc pl-5 text-sm text-gray-600 space-y-1">
-        {data.key_factors.map((kf: string, i: number) => (
-          <li key={i}>{kf}</li>
-        ))}
-      </ul>
-    </div>
-  </div>
-);

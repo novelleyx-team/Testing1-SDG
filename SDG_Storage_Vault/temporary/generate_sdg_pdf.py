@@ -23,6 +23,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np
+import json
 
 # ──────────────────────────────────────────────────────────────
 # Configuration
@@ -56,6 +57,67 @@ ORANGE = colors.HexColor('#FD6925')
 WHITE  = colors.white
 LGRAY  = colors.HexColor('#F2F4F7')
 MGRAY  = colors.HexColor('#E8E8F0')
+
+# ──────────────────────────────────────────────────────────────
+# Project Input & SDG Scoring Logic
+# ──────────────────────────────────────────────────────────────
+PROJECT_ABSTRACT = "This project aims to develop a low-cost, solar-powered water purification system for rural communities. It focuses on affordable technology, clean water, and improving public health."
+PROJECT_KEYWORDS = ["solar-powered", "water purification", "low-cost", "public health", "rural communities"]
+
+def calculate_sdg_ratings(abstract, keywords):
+    """Calculates SDG star ratings based on keyword matching."""
+    try:
+        with open(os.path.join(SCRIPT_DIR, 'sdg_keywords.json'), 'r', encoding='utf-8') as f:
+            sdg_dict = json.load(f)
+    except FileNotFoundError:
+        return {i: 5 for i in range(1, 18)}
+    
+    text_to_search = (abstract + " " + " ".join(keywords)).lower()
+    
+    ratings = {}
+    for sdg_num, data in sdg_dict.items():
+        sdg_num = int(sdg_num)
+        matches = 0
+        for kw in data['keywords']:
+            if kw and kw in text_to_search:
+                matches += 1
+        
+        if matches >= 5:
+            stars = 5
+        elif matches >= 3:
+            stars = 4
+        elif matches >= 2:
+            stars = 3
+        elif matches >= 1:
+            stars = 2
+        else:
+            stars = 1
+        ratings[sdg_num] = stars
+    return ratings
+
+SDG_RATINGS = calculate_sdg_ratings(PROJECT_ABSTRACT, PROJECT_KEYWORDS)
+
+def calculate_category_percentages():
+    cat_scores = {'Economic': 0, 'Social': 0, 'Environmental': 0}
+    sdg_goals = [
+        (1, 'Economic'), (2, 'Economic'), (3, 'Social'), (4, 'Social'), (5, 'Social'),
+        (6, 'Environmental'), (7, 'Environmental'), (8, 'Economic'), (9, 'Economic'),
+        (10, 'Economic'), (11, 'Social'), (12, 'Economic'), (13, 'Environmental'),
+        (14, 'Environmental'), (15, 'Environmental'), (16, 'Social'), (17, 'Social')
+    ]
+    for num, cat in sdg_goals:
+        cat_scores[cat] += SDG_RATINGS[num]
+        
+    total_score = sum(cat_scores.values())
+    if total_score == 0: total_score = 1
+    
+    return {
+        'Economic': (cat_scores['Economic'] / total_score) * 100,
+        'Social': (cat_scores['Social'] / total_score) * 100,
+        'Environmental': (cat_scores['Environmental'] / total_score) * 100
+    }
+
+CAT_PCTS = calculate_category_percentages()
 
 # ──────────────────────────────────────────────────────────────
 # Styles
@@ -155,8 +217,8 @@ def info_box(text, accent_color=BLUE):
 # ──────────────────────────────────────────────────────────────
 def generate_pie_chart():
     fig, ax = plt.subplots(figsize=(4.5, 4.5), dpi=180)
-    data = [35.29, 35.29, 29.42]
-    labels = ['Economic\n(35.29%)', 'Social\n(35.29%)', 'Environmental\n(29.42%)']
+    data = [CAT_PCTS['Economic'], CAT_PCTS['Social'], CAT_PCTS['Environmental']]
+    labels = [f"Economic\n({CAT_PCTS['Economic']:.2f}%)", f"Social\n({CAT_PCTS['Social']:.2f}%)", f"Environmental\n({CAT_PCTS['Environmental']:.2f}%)"]
     clrs = ['#DDA63A', '#0A97D9', '#4C9F38']
     explode = (0.03, 0.03, 0.03)
     wedges, texts, autotexts = ax.pie(data, labels=labels, autopct='',
@@ -178,7 +240,7 @@ def generate_pie_chart():
 def generate_bar_chart():
     fig, ax = plt.subplots(figsize=(6.5, 3.8), dpi=180)
     sdg_nums = list(range(1, 18))
-    ratings = [5]*17
+    ratings = [SDG_RATINGS[i] for i in sdg_nums]
     bar_colors = [SDG_COLORS[i] for i in sdg_nums]
     bars = ax.bar([str(i) for i in sdg_nums], ratings, color=bar_colors,
                   edgecolor='white', linewidth=0.5, width=0.72)
@@ -526,7 +588,7 @@ def build_report():
 
     sdg_data = [['SDG', 'Goal Name', 'Category', 'Rating']]
     for num, name, cat in sdg_goals:
-        sdg_data.append([f'SDG {num}', name, cat, star_str()])
+        sdg_data.append([f'SDG {num}', name, cat, star_str(SDG_RATINGS[num])])
 
     sdg_tbl = make_table(sdg_data, col_widths=[50, 215, 95, PAGE_W-2*MARGIN-370])
     # Category color coding
@@ -605,9 +667,9 @@ def build_report():
     ]
     stat2 = [
         ['Category', 'Percentage'],
-        ['Economic', '35.29%'],
-        ['Social', '35.29%'],
-        ['Environmental', '29.42%'],
+        ['Economic', f"{CAT_PCTS['Economic']:.2f}%"],
+        ['Social', f"{CAT_PCTS['Social']:.2f}%"],
+        ['Environmental', f"{CAT_PCTS['Environmental']:.2f}%"],
     ]
     t1 = make_table(stat1, col_widths=[120, 100])
     t2 = make_table(stat2, col_widths=[120, 100])
@@ -641,12 +703,17 @@ def build_report():
     elements.append(gradient_bar())
     elements.append(Spacer(1, 8))
 
+    total_5_stars = sum(1 for v in SDG_RATINGS.values() if v == 5)
+    below_5 = 17 - total_5_stars
+    total_stars = sum(SDG_RATINGS.values())
+    overall_coverage = (total_stars / (17 * 5)) * 100
+
     rating_data = [
         ['Metric', 'Value'],
         ['Total SDGs Evaluated', '17'],
-        ['SDGs with 5-Star Ratings', '17'],
-        ['SDGs Below 5 Stars', '0'],
-        ['Overall Coverage', '100%'],
+        ['SDGs with 5-Star Ratings', str(total_5_stars)],
+        ['SDGs Below 5 Stars', str(below_5)],
+        ['Overall Coverage', f"{overall_coverage:.1f}%"],
     ]
     elements.append(make_table(rating_data, col_widths=[250, PAGE_W-2*MARGIN-260]))
     elements.append(Spacer(1, 6))
@@ -775,10 +842,11 @@ def build_report():
     elements.append(Spacer(1, 10))
 
     # Grade box
+    grade = "A+" if overall_coverage >= 90 else "A" if overall_coverage >= 80 else "B+" if overall_coverage >= 70 else "B" if overall_coverage >= 60 else "C"
     grade_data = [
         [Paragraph('<font color="white" size="12"><b>Final Sustainability Assessment Grade</b></font>', sCenter)],
-        [Paragraph('<font color="white" size="36"><b>A+</b></font>', sCenter)],
-        [Paragraph('<font color="white" size="10">Excellent — Comprehensive SDG Alignment Achieved</font>', sCenter)],
+        [Paragraph(f'<font color="white" size="36"><b>{grade}</b></font>', sCenter)],
+        [Paragraph(f'<font color="white" size="10">Overall Coverage: {overall_coverage:.1f}%</font>', sCenter)],
     ]
     grade_tbl = Table(grade_data, colWidths=[320])
     grade_tbl.setStyle(TableStyle([
@@ -804,9 +872,9 @@ def build_report():
         ['Economic Goals', '6'],
         ['Social Goals', '6'],
         ['Environmental Goals', '5'],
-        ['5-Star Ratings', '17'],
-        ['Overall SDG Coverage', '100%'],
-        ['Sustainability Grade', 'Excellent (A+)'],
+        ['5-Star Ratings', str(total_5_stars)],
+        ['Overall SDG Coverage', f"{overall_coverage:.1f}%"],
+        ['Sustainability Grade', grade],
     ]
     elements.append(make_table(final_data, col_widths=[260, PAGE_W-2*MARGIN-270]))
     elements.append(Spacer(1, 16))

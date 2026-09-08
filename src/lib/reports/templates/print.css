@@ -1,56 +1,239 @@
-/* Print-specific CSS for PDF Generation */
+/* Print-specific CSS for High-Fidelity PDF Generation */
+:root {
+  --primary-blue: #13507B;
+  --secondary-blue: #23739E;
+  --light-blue: #eef5fa;
+  --text-dark: #1f2937;
+  --text-muted: #4b5563;
+  --border-light: #e5e7eb;
+}
+
 @page {
+  /* Margins are managed by Puppeteer, but we declare A4 here too */
   size: A4;
-  margin: 0;
 }
 
 body {
   -webkit-print-color-adjust: exact !important;
   print-color-adjust: exact !important;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', 'Roboto', sans-serif;
+  color: var(--text-dark);
   background-color: white;
   margin: 0;
   padding: 0;
+  line-height: 1.6;
 }
 
-.page-break {
+/* Page Control Classes */
+.page-break-before {
   page-break-before: always;
-  page-break-inside: avoid;
-  width: 210mm;
-  min-height: 297mm;
-  margin: 0 auto;
-  position: relative;
-  overflow: hidden;
-  box-sizing: border-box;
 }
-
-.page-break:first-child {
-  page-break-before: avoid;
+.page-break-after {
+  page-break-after: always;
 }
-
 .keep-together {
   page-break-inside: avoid;
 }
 
-.report-header {
-  position: absolute;
-  top: 40px;
-  left: 48px;
-  right: 48px;
-  display: flex;
-  justify-content: space-between;
-  border-bottom: 2px solid #E5E7EB;
-  padding-bottom: 8px;
-  font-size: 10px;
-  font-weight: 600;
-  color: #9CA3AF;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+/* Typography Hierarchy */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--primary-blue);
+  font-family: 'Inter', sans-serif;
+  margin-top: 0;
 }
 
-/* Ensure background colors and gradients render correctly in PDF */
-.bg-blue-600 { background-color: #2563eb !important; }
-.text-blue-600 { color: #2563eb !important; }
-.bg-green-500 { background-color: #22c55e !important; }
-.bg-amber-500 { background-color: #f59e0b !important; }
-.bg-red-500 { background-color: #ef4444 !important; }
+.report-h1 {
+  font-size: 32pt;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.report-h2 {
+  font-size: 24pt;
+  font-weight: 700;
+  border-bottom: 2px solid var(--secondary-blue);
+  padding-bottom: 8pt;
+  margin-bottom: 16pt;
+  margin-top: 24pt;
+  page-break-after: avoid;
+}
+
+.report-h3 {
+  font-size: 16pt;
+  font-weight: 600;
+  color: var(--secondary-blue);
+  margin-bottom: 12pt;
+  margin-top: 20pt;
+  page-break-after: avoid;
+}
+
+.report-body {
+  font-size: 11pt;
+  color: var(--text-muted);
+  margin-bottom: 12pt;
+  text-align: justify;
+}
+
+/* SDG specific styling */
+.sdg-header-bar {
+  display: flex;
+  height: 12px;
+  width: 100%;
+}
+.sdg-color { flex: 1; }
+/* Replicating the 17 colors roughly */
+.c1{background:#e5243b} .c2{background:#dda63a} .c3{background:#4c9f38}
+.c4{background:#c5192d} .c5{background:#ff3a21} .c6{background:#26bde2}
+.c7{background:#fcc30b} .c8{background:#a21942} .c9{background:#fd6925}
+.c10{background:#dd1367} .c11{background:#fd9d24} .c12{background:#bf8b2e}
+.c13{background:#3f7e44} .c14{background:#0a97d9} .c15{background:#56c02b}
+.c16{background:#00689d} .c17{background:#19486a}
+
+/* Tables */
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 24pt;
+}
+
+.report-table th {
+  background-color: var(--primary-blue);
+  color: white;
+  font-weight: 600;
+  text-align: left;
+  padding: 10pt;
+  font-size: 11pt;
+}
+
+.report-table td {
+  padding: 10pt;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 11pt;
+}
+
+.report-table tbody tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+.report-table tbody tr:nth-child(odd) {
+  background-color: #ffffff;
+}
+
+/* Cover Page Specifics */
+.cover-page {
+  position: relative;
+  width: 100%;
+  min-height: 297mm; /* Full A4 height roughly */
+  background-color: var(--secondary-blue);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  margin: 0;
+  /* Adjusting for negative margins to counteract puppeteer margins */
+  margin-top: -40px; 
+  margin-bottom: -60px;
+}
+
+.cover-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  text-align: center;
+}
+
+.cover-h1 {
+  font-size: 36pt;
+  font-weight: 800;
+  color: white;
+  margin: 24pt 0 8pt 0;
+}
+
+.cover-subtitle {
+  font-size: 16pt;
+  font-weight: 500;
+  color: rgba(255,255,255,0.9);
+  margin-bottom: 40pt;
+  letter-spacing: 1px;
+}
+
+.cover-info-card {
+  background-color: rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 30pt;
+  width: 80%;
+  max-width: 600px;
+  text-align: left;
+}
+
+.cover-info-row {
+  display: flex;
+  margin-bottom: 12pt;
+}
+
+.cover-info-label {
+  width: 150px;
+  font-weight: 700;
+  font-size: 12pt;
+  color: white;
+}
+
+.cover-info-value {
+  flex: 1;
+  font-size: 12pt;
+  color: white;
+}
+
+/* Content Boxes (Like strengths/limitations) */
+.info-box {
+  background-color: var(--light-blue);
+  padding: 16pt;
+  border-left: 6px solid var(--primary-blue);
+  margin-bottom: 16pt;
+}
+
+.info-box-green {
+  background-color: #f0fdf4;
+  border-left: 6px solid #16a34a;
+}
+
+.info-box-red {
+  background-color: #fef2f2;
+  border-left: 6px solid #dc2626;
+}
+
+.rating-stars {
+  color: #fbbf24;
+  font-size: 14pt;
+  letter-spacing: 2px;
+}
+
+.toc-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8pt;
+  font-size: 11pt;
+  color: var(--primary-blue);
+  font-weight: 500;
+}
+.toc-item.bold {
+  font-weight: 700;
+  margin-top: 12pt;
+}
+.toc-item .page-num {
+  font-weight: 700;
+}
+
+/* Utilities */
+.text-center { text-align: center; }
+.mt-4 { margin-top: 16px; }
+.mb-4 { margin-bottom: 16px; }
+.mb-8 { margin-bottom: 32px; }
+.flex { display: flex; }
+.gap-4 { gap: 16px; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+

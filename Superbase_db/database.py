@@ -268,6 +268,69 @@ def _init_db(conn):
         version TEXT
     )''')
 
+    # --- PRODUCTION ARCHITECTURE EXPANSION ---
+    conn.execute('''
+    CREATE TABLE IF NOT EXISTS outbox_events (
+        id TEXT PRIMARY KEY,
+        event_type TEXT,
+        payload TEXT,
+        status TEXT DEFAULT 'PENDING',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        processed_at DATETIME
+    )''')
+
+    conn.execute('''
+    CREATE TABLE IF NOT EXISTS notifications (
+        id TEXT PRIMARY KEY,
+        event_type TEXT,
+        recipient_user_id TEXT,
+        recipient_role TEXT,
+        channel TEXT,
+        contact_reference TEXT,
+        template_id TEXT,
+        status TEXT DEFAULT 'QUEUED',
+        provider_message_id TEXT,
+        failure_reason TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        sent_at DATETIME,
+        delivered_at DATETIME
+    )''')
+
+    conn.execute('''
+    CREATE TABLE IF NOT EXISTS idempotency_keys (
+        idempotency_key TEXT PRIMARY KEY,
+        operation_name TEXT,
+        resource_id TEXT,
+        response_payload TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )''')
+
+    conn.execute('''
+    CREATE TABLE IF NOT EXISTS ai_cost_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        analysis_id TEXT,
+        model_name TEXT,
+        model_provider TEXT,
+        task_complexity TEXT,
+        input_tokens INTEGER DEFAULT 0,
+        output_tokens INTEGER DEFAULT 0,
+        estimated_cost REAL DEFAULT 0.0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )''')
+
+    conn.execute('''
+    CREATE TABLE IF NOT EXISTS sdg_knowledge_base (
+        sdg_number INTEGER PRIMARY KEY,
+        sdg_name TEXT,
+        official_description TEXT,
+        targets TEXT,
+        keywords TEXT,
+        inclusion_criteria TEXT,
+        exclusion_criteria TEXT,
+        version TEXT,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )''')
+
     # Seed Departments
     official_deps = [
         "Computer Science", 
@@ -792,4 +855,78 @@ def get_ai_analysis(project_id):
     analysis["external_sources"] = cursor.fetchall()
     
     return analysis
+
+# --- PRODUCTION ARCHITECTURE: OUTBOX & NOTIFICATIONS ---
+
+def create_outbox_event(event_id, event_type, payload):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    if isinstance(payload, (dict, list)):
+        payload = json.dumps(payload)
+    cursor.execute("INSERT INTO outbox_events (id, event_type, payload) VALUES (%s, %s, %s)",
+                   (event_id, event_type, payload))
+    conn.commit()
+    return event_id
+
+def create_notification(notification_id, event_type, recipient_user_id, recipient_role, channel, contact_reference, template_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO notifications (id, event_type, recipient_user_id, recipient_role, channel, contact_reference, template_id) 
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+    """, (notification_id, event_type, recipient_user_id, recipient_role, channel, contact_reference, template_id))
+    conn.commit()
+    return notification_id
+
+def update_notification_status(notification_id, status, provider_message_id=None, failure_reason=None):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    updates = ["status = %s"]
+    params = [status]
+    
+    if status == 'SENT':
+        updates.append("sent_at = CURRENT_TIMESTAMP")
+    elif status == 'DELIVERED':
+        updates.append("delivered_at = CURRENT_TIMESTAMP")
+        
+    if provider_message_id:
+        updates.append("provider_message_id = %s")
+        params.append(provider_message_id)
+        
+    if failure_reason:
+        updates.append("failure_reason = %s")
+        params.append(failure_reason)
+        
+    params.append(notification_id)
+    
+    query = f"UPDATE notifications SET {', '.join(updates)} WHERE id = %s"
+    cursor.execute(query, tuple(params))
+    conn.commit()
+
+# --- IDEMPOTENCY ---
+
+def check_idempotency_key(idempotency_key, operation_name):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM idempotency_keys WHERE idempotency_key = %s AND operation_name = %s", 
+                   (idempotency_key, operation_name))
+    row = cursor.fetchone()
+    if row and row.get("response_payload"):
+        try:
+            row["response_payload"] = json.loads(row["response_payload"])
+        except:
+            pass
+    return row
+
+def save_idempotency_key(idempotency_key, operation_name, resource_id, response_payload):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    if isinstance(response_payload, (dict, list)):
+        response_payload = json.dumps(response_payload)
+    cursor.execute("""
+        INSERT INTO idempotency_keys (idempotency_key, operation_name, resource_id, response_payload) 
+        VALUES (%s, %s, %s, %s)
+    """, (idempotency_key, operation_name, resource_id, response_payload))
+    conn.commit()
+
 

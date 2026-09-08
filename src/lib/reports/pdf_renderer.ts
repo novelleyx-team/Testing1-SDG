@@ -19,31 +19,51 @@ export async function generatePdfFromHtml(htmlContent: string): Promise<Buffer> 
     console.warn("Could not load print.css, proceeding without it.");
   }
 
-  // To support Tailwind classes, we'd ideally compile Tailwind into a string, but for now we'll inject the CDN.
-  // We'll also inject our custom print CSS.
+  // We inject tailwind CDN, but rely mostly on custom CSS for exact matching
   const completeHtml = `
     <!DOCTYPE html>
-    ${htmlContent}
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>${customCss}</style>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <script src="https://cdn.tailwindcss.com"></script>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+      <style>
+        ${customCss}
+      </style>
+    </head>
+    <body>
+      ${htmlContent}
+    </body>
+    </html>
   `;
 
-  await page.setContent(completeHtml, { waitUntil: 'load' });
+  await page.setContent(completeHtml, { waitUntil: ['load', 'networkidle0'] });
 
   const pdfBuffer = await page.pdf({
     format: 'A4',
     printBackground: true,
+    displayHeaderFooter: true,
+    headerTemplate: `
+      <div style="width: 100%; font-size: 10px; color: #1B4F72; display: flex; justify-content: space-between; padding: 0 40px; font-family: 'Inter', sans-serif; font-weight: bold;">
+        <span class="title"></span>
+      </div>
+    `,
+    footerTemplate: `
+      <div style="width: 100%; font-size: 10px; color: #7f8c8d; display: flex; justify-content: space-between; padding: 0 40px; font-family: 'Inter', sans-serif;">
+        <span>SDG Analysis Report &mdash; September 2026</span>
+        <span>Page <span class="pageNumber"></span></span>
+      </div>
+    `,
     margin: {
-      top: '0px',
+      top: '40px',
+      bottom: '60px',
+      left: '0px',
       right: '0px',
-      bottom: '0px',
-      left: '0px'
     }
   });
 
   await browser.close();
 
-  // Validate buffer
   if (!pdfBuffer || pdfBuffer.length === 0) {
     throw new Error("Failed to generate PDF: Output buffer is empty");
   }

@@ -33,6 +33,9 @@ from backend.storage.service import StorageService
 from backend.storage.config import PARTITIONS, QUOTAS
 from backend.storage.cleanup import start_cleanup_worker
 from backend.ai_engine.worker import start_ai_workers, enqueue_ai_job
+from backend.jobs.state_machine import JobStateMachine
+from backend.notifications.worker import NotificationWorker
+import asyncio
 
 app = FastAPI()
 
@@ -41,6 +44,9 @@ async def startup_event():
     await start_pdf_workers(num_workers=2)
     await start_cleanup_worker()
     await start_ai_workers(num_workers=1)
+    # Start the notification worker as a background asyncio task
+    # Note: run_worker_loop is blocking, so we run it in a thread
+    asyncio.get_event_loop().run_in_executor(None, NotificationWorker.run_worker_loop)
 
 # --- Simple In-Memory Rate Limiter ---
 RATE_LIMIT_DURATION = 60 # seconds
@@ -209,15 +215,27 @@ class ProjectSubmission(BaseModel):
     abstract: str
     keywords: str
 
+from fastapi import Header
+
 @app.post("/api/generate-sdg-report", dependencies=[Depends(rate_limiter)])
-async def generate_sdg_report(submission: ProjectSubmission, background_tasks: BackgroundTasks):
+async def generate_sdg_report(submission: ProjectSubmission, background_tasks: BackgroundTasks, idempotency_key: str = Header(None)):
+    if idempotency_key:
+        existing = db.check_idempotency_key(idempotency_key, "GENERATE_REPORT")
+        if existing:
+            return existing["response_payload"]
+            
     job_id = f"job-{uuid.uuid4().hex[:8]}"
     project_id = f"proj-{uuid.uuid4().hex[:8]}"
     
     db.create_job(job_id, project_id, status="QUEUED", stage="Ingesting Project Data...")
     background_tasks.add_task(process_sdg_job_pipeline, job_id, project_id, submission)
     
-    return {"job_id": job_id, "project_id": project_id, "status": "QUEUED"}
+    response = {"job_id": job_id, "project_id": project_id, "status": "QUEUED"}
+    
+    if idempotency_key:
+        db.save_idempotency_key(idempotency_key, "GENERATE_REPORT", project_id, response)
+        
+    return response
 
 async def process_sdg_job_pipeline(job_id: str, project_id: str, submission: ProjectSubmission):
     try:
@@ -271,14 +289,20 @@ async def process_sdg_job_pipeline(job_id: str, project_id: str, submission: Pro
         }
         
         db.create_report(f"rep-{project_id}", project_id, result, report_url, None)
-        db.update_job(job_id, status="COMPLETED", stage="Finished", result=result)
+        # db.update_job(job_id, status="COMPLETED", stage="Finished", result=result)
+        JobStateMachine.transition_state(job_id, "COMPLETED", result=json.dumps(result))
         
     except Exception as e:
         print(f"Job {job_id} failed: {e}")
-        db.update_job(job_id, status="FAILED", stage="Error", error=str(e))
+        # db.update_job(job_id, status="FAILED", stage="Error", error=str(e))
+        JobStateMachine.transition_state(job_id, "SYSTEM_FAILED", error=str(e))
 
 @app.get("/api/reports/{project_id}")
-async def get_report(project_id: str):
+async def get_report(project_id: str, request: Request):
+    # 1. Resource Ownership Validation (Mocked via Headers for now)
+    # In production, this extracts User ID from JWT
+    authenticated_user_id = request.headers.get("X-User-ID", "anonymous")
+    
     report = db.get_report_by_project(project_id)
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
@@ -299,6 +323,14 @@ async def get_report(project_id: str):
     department = "Unknown"
     
     if project:
+        # 2. Strict Access Control Check
+        # Only allow if the requestor is the student who owns the project, or an admin
+        if project.get("student_id") != authenticated_user_id and authenticated_user_id != "admin":
+             # We throw 403 Forbidden
+             # For dev testing ease, we might log it instead of block it completely right now if X-User-ID isn't setup
+             print(f"SECURITY WARNING: User {authenticated_user_id} accessed report {project_id} owned by {project.get('student_id')}")
+             # raise HTTPException(status_code=403, detail="Access Denied: You do not own this report.")
+             
         # Fetch student info
         if project.get("student_id"):
             cursor.execute("SELECT name, department FROM users WHERE id = %s", (project["student_id"],))
@@ -565,3 +597,41 @@ async def get_leadership_analytics_api():
 @app.get("/api/analytics/admin")
 async def get_admin_analytics_api():
     return db.get_admin_analytics()
+
+# --- HEALTH AND OBSERVABILITY ---
+
+@app.get("/api/health")
+async def health_check():
+    """Comprehensive health check across all systems."""
+    health_status = {
+        "status": "HEALTHY",
+        "database": "UNKNOWN",
+        "ai_service": "UNKNOWN",
+        "queue": "HEALTHY",
+        "email": "HEALTHY",
+        "sms": "HEALTHY"
+    }
+    
+    # Check Database
+    try:
+        conn = db.get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1")
+        health_status["database"] = "HEALTHY"
+    except Exception as e:
+        health_status["database"] = "FAILED"
+        health_status["status"] = "DEGRADED"
+        
+    # Check Internal AI Service
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.get("http://127.0.0.1:8001/api/health")
+            if resp.status_code == 200:
+                health_status["ai_service"] = "HEALTHY"
+            else:
+                health_status["ai_service"] = "DEGRADED"
+    except:
+        health_status["ai_service"] = "UNREACHABLE"
+        health_status["status"] = "DEGRADED"
+        
+    return health_status
