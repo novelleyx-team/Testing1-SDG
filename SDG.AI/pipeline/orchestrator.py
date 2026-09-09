@@ -13,6 +13,7 @@ from .slm_workers import (
 )
 from .llm_reasoning import SDGRelevanceEngine, ImpactAnalyzer, RecommendationEngine
 from .scoring import calculate_completeness, calculate_overall_confidence
+from .knowledge_base import SDGKnowledgeBase
 
 logger = logging.getLogger("PipelineOrchestrator")
 
@@ -79,9 +80,20 @@ class PipelineOrchestrator:
         # ---------------------------------------------------------
         # STAGE 7 & 8: SDG RELEVANCE ENGINE & LOGICAL REASONING
         # ---------------------------------------------------------
-        logger.info("Stage 7 & 8: SDG Relevance Analysis")
+        logger.info("Stage 7 & 8: SDG Relevance Analysis (With Knowledge Base Retrieval)")
+        
+        # 1. Keyword extraction for basic retrieval
+        keywords = []
+        if raw_input.get("project_name"): keywords.append(raw_input["project_name"])
+        
+        # 2. Retrieve strict guidelines from Knowledge Base
+        knowledge_context = SDGKnowledgeBase.get_relevant_sdgs(keywords)
+        # Fallback to all if no specific match
+        if not knowledge_context:
+            knowledge_context = SDGKnowledgeBase.get_all_sdgs()
+            
         SDGMappingSchema = create_model('SDGMappingSchema', primary_sdgs=(List[SDGRelevance], ...), secondary_sdgs=(List[SDGRelevance], ...))
-        sdg_mapping = self.relevance_engine.map_sdgs(extracted_facts_result.facts, SDGMappingSchema)
+        sdg_mapping = self.relevance_engine.map_sdgs(extracted_facts_result.facts, knowledge_context, SDGMappingSchema)
         audit_trail["stages"]["sdg_mapping"] = "Completed"
 
         # ---------------------------------------------------------
@@ -138,7 +150,7 @@ class PipelineOrchestrator:
         # STAGE 16: FINAL REPORT ASSEMBLY
         # ---------------------------------------------------------
         report = FinalReport(
-            project_overview=[f.fact for f in extracted_facts_result.facts if f.category == "STUDENT_PROVIDED"],
+            project_overview=[f.fact for f in extracted_facts_result.facts if f.category == "STUDENT_FACT"],
             data_quality_assessment=f"Completeness Score: {completeness_score}. Gaps found: {len(gap_result.gaps)}",
             key_activities=[student_input.activities] if student_input.activities else [],
             primary_sdgs=sdg_mapping.primary_sdgs,

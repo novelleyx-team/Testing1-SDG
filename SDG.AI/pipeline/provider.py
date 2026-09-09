@@ -4,8 +4,7 @@ from pydantic import BaseModel
 from typing import TypeVar, Type, Any
 
 from backend.ai_engine.providers.local_slm import local_slm
-# Assuming there is a stronger LLM available
-# from backend.ai_engine.providers.openai_llm import openai_llm 
+from backend.ai_engine.providers.cloud_llm import cloud_llm
 
 from .slm_workers import BaseAIProvider
 from .schema_validator import AIResponseValidator
@@ -57,17 +56,13 @@ class IntelligentRouter(BaseAIProvider):
         
         # 2. Model Selection
         if complexity == "LOW":
-            provider_name = "SLM"
-            model_name = "local_llama_3_8b"
-            # generator_func = lambda: local_slm.generate_raw(prompt) 
-            # (Assuming local_slm has a raw text generation method, we mock it here)
-            generator_func = lambda: local_slm.generate_structured(prompt, schema_class).model_dump_json()
+            provider_name = "CLOUD_SLM"
+            model_name = "gemini-1.5-flash"
+            generator_func = lambda: cloud_llm.generate_structured(prompt, schema_class, model=model_name).model_dump_json()
         else:
-            provider_name = "MAIN_LLM"
-            model_name = "gpt-4o-mini"
-            # In production, this points to the expensive model
-            # generator_func = lambda: openai_llm.generate_raw(prompt)
-            generator_func = lambda: local_slm.generate_structured(prompt, schema_class).model_dump_json()
+            provider_name = "CLOUD_MAIN_LLM"
+            model_name = "gemini-1.5-pro"
+            generator_func = lambda: cloud_llm.generate_structured(prompt, schema_class, model=model_name).model_dump_json()
             
         # 3. Execution with Strict Validation and Recovery
         logger.info(f"Task Complexity: {complexity}. Routing to {provider_name} ({model_name}).")

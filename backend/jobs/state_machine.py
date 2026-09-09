@@ -51,26 +51,42 @@ class JobStateMachine:
             logger.error(f"Invalid state transition for {job_id}: {current_state} -> {new_state}")
             raise ValueError(f"Invalid transition: Cannot move from {current_state} to {new_state}")
             
-        # Perform transition
+        # Perform transition transactionally
         logger.info(f"Transitioning job {job_id}: {current_state} -> {new_state}")
-        db.update_job(job_id, status=new_state, result=result, error=error)
         
-        # Transactional Outbox hook
-        if new_state == "COMPLETED":
-            # If the job represents an analysis, we fire the ANALYSIS_COMPLETED event
-            event_id = f"evt-comp-{job_id}"
-            db.create_outbox_event(
-                event_id=event_id,
-                event_type="ANALYSIS_COMPLETED",
-                payload={"job_id": job_id, "project_id": job.get('project_id')}
-            )
+        # We manually construct the queries to ensure atomicity within the same transaction wrapper
+        import json
+        with db.get_db_connection() as conn:
+            cursor = conn.cursor()
             
-        elif new_state in ["ANALYSIS_FAILED", "SYSTEM_FAILED", "VALIDATION_FAILED"]:
-            event_id = f"evt-fail-{job_id}"
-            db.create_outbox_event(
-                event_id=event_id,
-                event_type="ANALYSIS_FAILED",
-                payload={"job_id": job_id, "project_id": job.get('project_id'), "error": error}
-            )
+            # 1. Update Job
+            updates = ["status = %s"]
+            params = [new_state]
+            if result is not None:
+                updates.append("result = %s")
+                params.append(json.dumps(result) if isinstance(result, (dict, list)) else result)
+            if error is not None:
+                updates.append("error = %s")
+                params.append(error)
+            updates.append("updated_at = CURRENT_TIMESTAMP")
+            
+            query = f"UPDATE jobs SET {', '.join(updates)} WHERE id = %s"
+            params.append(job_id)
+            cursor.execute(query, tuple(params))
+            
+            # 2. Transactional Outbox hook
+            if new_state == "COMPLETED":
+                event_id = f"evt-comp-{job_id}"
+                payload = json.dumps({"job_id": job_id, "project_id": job.get('project_id')})
+                cursor.execute("INSERT INTO outbox_events (id, event_type, payload) VALUES (%s, %s, %s)",
+                               (event_id, "ANALYSIS_COMPLETED", payload))
+                
+            elif new_state in ["ANALYSIS_FAILED", "SYSTEM_FAILED", "VALIDATION_FAILED"]:
+                event_id = f"evt-fail-{job_id}"
+                payload = json.dumps({"job_id": job_id, "project_id": job.get('project_id'), "error": error})
+                cursor.execute("INSERT INTO outbox_events (id, event_type, payload) VALUES (%s, %s, %s)",
+                               (event_id, "ANALYSIS_FAILED", payload))
+            
+            # The context manager __exit__ will automatically commit()
             
         return True

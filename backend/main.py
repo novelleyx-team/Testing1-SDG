@@ -11,6 +11,7 @@ import httpx
 import json
 import shutil
 import time
+import jwt
 
 # Link to the master database folder "Superbase_db"
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -18,6 +19,25 @@ if parent_dir not in sys.path:
     sys.path.append(parent_dir)
 
 from Superbase_db import database as db
+
+# --- JWT Auth Setup ---
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+security = HTTPBearer()
+
+SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET", "super-secret-jwt-token-with-at-least-32-characters-long")
+
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    token = credentials.credentials
+    try:
+        payload = jwt.decode(token, SUPABASE_JWT_SECRET, algorithms=["HS256"], options={"verify_aud": False})
+        user_id = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Invalid token: missing subject")
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.InvalidTokenError as e:
+        raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
 
 # --- PATHING FOR STORAGE SANDBOX ---
 SANDBOX_DIR = os.getenv("SANDBOX_DIR", os.path.join(os.getcwd(), "SDG_Local_Sandbox"))
@@ -218,7 +238,12 @@ class ProjectSubmission(BaseModel):
 from fastapi import Header
 
 @app.post("/api/generate-sdg-report", dependencies=[Depends(rate_limiter)])
-async def generate_sdg_report(submission: ProjectSubmission, background_tasks: BackgroundTasks, idempotency_key: str = Header(None)):
+async def generate_sdg_report(
+    submission: ProjectSubmission, 
+    background_tasks: BackgroundTasks, 
+    idempotency_key: str = Header(None),
+    user_payload: dict = Depends(get_current_user)
+):
     if idempotency_key:
         existing = db.check_idempotency_key(idempotency_key, "GENERATE_REPORT")
         if existing:
@@ -298,10 +323,10 @@ async def process_sdg_job_pipeline(job_id: str, project_id: str, submission: Pro
         JobStateMachine.transition_state(job_id, "SYSTEM_FAILED", error=str(e))
 
 @app.get("/api/reports/{project_id}")
-async def get_report(project_id: str, request: Request):
-    # 1. Resource Ownership Validation (Mocked via Headers for now)
-    # In production, this extracts User ID from JWT
-    authenticated_user_id = request.headers.get("X-User-ID", "anonymous")
+async def get_report(project_id: str, request: Request, user_payload: dict = Depends(get_current_user)):
+    # 1. Resource Ownership Validation (Real JWT)
+    authenticated_user_id = user_payload.get("sub")
+    authenticated_role = user_payload.get("role", "authenticated")
     
     report = db.get_report_by_project(project_id)
     if not report:
@@ -325,11 +350,10 @@ async def get_report(project_id: str, request: Request):
     if project:
         # 2. Strict Access Control Check
         # Only allow if the requestor is the student who owns the project, or an admin
-        if project.get("student_id") != authenticated_user_id and authenticated_user_id != "admin":
+        if project.get("student_id") != authenticated_user_id and authenticated_user_id != "admin" and authenticated_role != "admin":
              # We throw 403 Forbidden
-             # For dev testing ease, we might log it instead of block it completely right now if X-User-ID isn't setup
              print(f"SECURITY WARNING: User {authenticated_user_id} accessed report {project_id} owned by {project.get('student_id')}")
-             # raise HTTPException(status_code=403, detail="Access Denied: You do not own this report.")
+             raise HTTPException(status_code=403, detail="Access Denied: You do not own this report.")
              
         # Fetch student info
         if project.get("student_id"):
@@ -475,14 +499,35 @@ async def delete_suggestion(sug_id: str):
     return {"message": "Deleted successfully"}
 
 
+# --- File Storage & Serving API ---
+@app.get("/api/storage/{storage_key:path}")
+async def get_storage_file(storage_key: str):
+    """Serve files securely using their storage key."""
+    try:
+        abs_path = StorageService.get_absolute_path(storage_key)
+        if not os.path.exists(abs_path):
+            raise HTTPException(status_code=404, detail="File not found")
+            
+        # Optional: guess media type, or just return FileResponse
+        return FileResponse(path=abs_path)
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # --- File Upload API ---
 @app.post("/api/upload")
 async def upload_file(
     file: UploadFile = File(...),
     owner_id: str = Form("anonymous"),
-    project_id: str = Form(None)
+    project_id: str = Form(None),
+    user_payload: dict = Depends(get_current_user)
 ):
     try:
+        # Override owner_id with authenticated user if possible
+        if user_payload and user_payload.get("sub"):
+            owner_id = user_payload.get("sub")
+
         # Use StorageService instead of raw filesystem
         result = await StorageService.upload_file(file, owner_id, project_id)
         
@@ -499,6 +544,7 @@ async def upload_file(
                 ai_status = "Sent to SDG.AI Engine"
             except Exception as e:
                 ai_status = f"SDG.AI Engine failed to queue: {str(e)}"
+
                 
         return {
             "file_id": result["file_id"],
@@ -635,3 +681,43 @@ async def health_check():
         health_status["status"] = "DEGRADED"
         
     return health_status
+
+# --- PROVIDER WEBHOOKS (Delivery Tracking) ---
+class WebhookPayload(BaseModel):
+    provider_message_id: str
+    status: str
+    failure_reason: str | None = None
+    event_timestamp: str | None = None
+
+@app.post("/api/webhooks/notifications")
+async def handle_notification_webhook(payload: WebhookPayload, request: Request):
+    """
+    Handles async delivery receipts from Email/SMS providers (Part 27)
+    """
+    # Map provider statuses to internal status enum
+    status_mapping = {
+        "delivered": "DELIVERED",
+        "bounced": "BOUNCED",
+        "failed": "FAILED",
+        "complained": "FAILED",
+        "opened": "DELIVERED"
+    }
+    
+    internal_status = status_mapping.get(payload.status.lower(), payload.status)
+    
+    conn = db.get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    cursor.execute("SELECT id FROM notifications WHERE provider_message_id = %s", (payload.provider_message_id,))
+    notif = cursor.fetchone()
+    
+    if not notif:
+        return {"status": "ignored", "reason": "Unknown provider_message_id"}
+        
+    db.update_notification_status(
+        notification_id=notif['id'],
+        status=internal_status,
+        failure_reason=payload.failure_reason
+    )
+    
+    return {"status": "success"}

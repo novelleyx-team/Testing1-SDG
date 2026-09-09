@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-require-imports */
 import { NextRequest, NextResponse } from "next/server";
 import { generatePdfFromHtml } from "@/lib/reports/pdf_renderer";
 import { ReportTemplate } from "@/lib/reports/templates/ReportTemplate";
-import { renderToStaticMarkup } from "react-dom/server";
+const { renderToStaticMarkup } = require("react-dom/server");
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -80,11 +82,11 @@ export async function GET(request: NextRequest) {
     const pdfBuffer = await generatePdfFromHtml(htmlContent);
 
     // 4. Return the PDF buffer directly to the user
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(pdfBuffer as any, {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': \`attachment; filename="NOVELLEYX_SDG_Report_${aiReportData.project.title.replace(/\\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf"\`
+        'Content-Disposition': `attachment; filename="NOVELLEYX_SDG_Report_${aiReportData.project.title.replace(/\\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf"`
       }
     });
 

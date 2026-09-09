@@ -137,12 +137,12 @@ async def sdg_report(project: ProjectDetails):
     """Aggregates all analyses into a comprehensive structured JSON report using the 16-stage pipeline."""
     try:
         from pipeline.orchestrator import PipelineOrchestrator
-        from pipeline.provider import RealAIProvider
+        from pipeline.provider import IntelligentRouter
         
-        # Instantiate the providers and orchestrator
-        # We use RealAIProvider for both SLM and LLM currently, but logically separated.
-        provider = RealAIProvider()
-        orchestrator = PipelineOrchestrator(slm_provider=provider, llm_provider=provider)
+        # We use IntelligentRouter for cost-optimized routing.
+        # Ensure we pass the project_id (used as analysis_id here for tracking).
+        router = IntelligentRouter(analysis_id=f"analysis_{project.title[:5]}")
+        orchestrator = PipelineOrchestrator(slm_provider=router, llm_provider=router)
         
         # Convert ProjectDetails to dict for the pipeline
         raw_input = {

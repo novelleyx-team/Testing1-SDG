@@ -1,5 +1,7 @@
 import time
 import logging
+import os
+import httpx
 from typing import List
 
 from Superbase_db import database as db
@@ -57,31 +59,51 @@ class NotificationWorker:
 
     @staticmethod
     def send_queued_notifications():
-        """Polls the notifications table and simulates sending."""
+        """Polls the notifications table and sends via configured Provider APIs."""
         conn = db.get_db_connection()
         cursor = conn.cursor(dictionary=True)
         
         cursor.execute("SELECT * FROM notifications WHERE status = 'QUEUED' LIMIT 50")
         notifications = cursor.fetchall()
         
+        provider_url = os.getenv("EMAIL_PROVIDER_URL", "https://api.resend.com/emails")
+        provider_key = os.getenv("EMAIL_PROVIDER_KEY", "re_123456789")
+        
         for notif in notifications:
             logger.info(f"Sending notification {notif['id']} to {notif['contact_reference']}")
             try:
-                # Simulated Provider Delivery (Mock implementation for now)
-                # In production, this would call AWS SES, SendGrid, Twilio, etc.
-                
                 # Render strict template
                 user_info = {"student_name": "Student", "project_name": "Your Project", "report_link": f"https://novelleyx.com/reports/{notif['id']}"}
                 rendered = TemplateEngine.render(notif['template_id'], user_info, notif['channel'])
                 
-                logger.info(f"Mock Sent: {rendered}")
+                # Real API call to Email Provider (Resend API format as example)
+                with httpx.Client() as client:
+                    response = client.post(
+                        provider_url,
+                        headers={
+                            "Authorization": f"Bearer {provider_key}",
+                            "Content-Type": "application/json"
+                        },
+                        json={
+                            "from": "notifications@novelleyx.com",
+                            "to": notif['contact_reference'],
+                            "subject": "Novelleyx SDG Report Update",
+                            "html": rendered
+                        },
+                        timeout=10.0
+                    )
+                    response.raise_for_status()
+                    provider_message_id = response.json().get("id", f"msg-{notif['id']}")
+                
+                logger.info(f"Successfully sent via Provider API. Message ID: {provider_message_id}")
                 
                 # Update status
                 db.update_notification_status(
                     notification_id=notif['id'],
-                    status='DELIVERED',
-                    provider_message_id=f"msg-{notif['id']}"
+                    status='DELIVERED', # Ideally QUEUED at provider, and Webhook sets DELIVERED
+                    provider_message_id=provider_message_id
                 )
+                
                 
             except Exception as e:
                 logger.error(f"Failed to send notification {notif['id']}: {e}")

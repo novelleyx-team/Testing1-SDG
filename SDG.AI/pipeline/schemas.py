@@ -32,7 +32,7 @@ class NormalizedData(StudentInput):
 # STAGE 4: FACT EXTRACTION
 # =====================================================================
 class ExtractedFact(BaseModel):
-    category: Literal["STUDENT_PROVIDED", "CALCULATED", "VERIFIED_EXTERNAL", "AI_INTERPRETATION"]
+    category: Literal["STUDENT_FACT", "CALCULATED_FACT", "VERIFIED_EXTERNAL_FACT", "AI_INTERPRETATION", "DATA_GAP"]
     fact: str
     source: str
     confidence: Literal["HIGH", "MEDIUM", "LOW"]
@@ -79,7 +79,7 @@ class SDGRelevance(BaseModel):
 # =====================================================================
 class ValidatedClaim(BaseModel):
     claim: str
-    type: Literal["STUDENT_PROVIDED", "CALCULATED", "VERIFIED_EXTERNAL", "AI_INTERPRETATION"]
+    type: Literal["STUDENT_FACT", "CALCULATED_FACT", "VERIFIED_EXTERNAL_FACT", "AI_INTERPRETATION", "DATA_GAP"]
     evidence: List[str]
     source: str
     confidence: Literal["HIGH", "MEDIUM", "LOW"]

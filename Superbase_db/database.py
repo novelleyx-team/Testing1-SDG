@@ -59,8 +59,22 @@ def get_db_connection():
             return MockCursor(self.conn, dictionary)
         def commit(self):
             self.conn.commit()
+        def rollback(self):
+            self.conn.rollback()
         def close(self):
             pass # Keep thread-local connection open
+            
+        # Context manager for transactions
+        def __enter__(self):
+            return self
+            
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            if exc_type is not None:
+                self.rollback()
+            else:
+                self.commit()
+            return False
+            
     return ConnWrapper(_local.conn)
 
 def _init_db(conn):

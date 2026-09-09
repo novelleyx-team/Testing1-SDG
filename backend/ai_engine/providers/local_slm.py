@@ -36,9 +36,8 @@ class LocalSLMProvider:
         full_prompt = f"<|system|>\n{system_msg}</s>\n<|user|>\n{prompt}</s>\n<|assistant|>\n"
         
         if self._pipeline == "MOCK":
-            logger.warning("Using MOCK SLM due to loading failure. Returning empty schema object.")
-            # Return a default-instantiated schema if model failed to load
-            return self._generate_mock_schema(schema)
+            logger.error("SLM is in MOCK mode due to loading failure. Failing explicitly to avoid fake data.")
+            raise RuntimeError("Local SLM model could not be loaded. Aborting generation.")
             
         try:
             # Note: Tiny models struggle with strict JSON generation without grammar constraints (like llama.cpp provides).
@@ -56,27 +55,8 @@ class LocalSLMProvider:
                 
         except Exception as e:
             logger.error(f"SLM Generation failed: {e}")
-            return self._generate_mock_schema(schema)
+            raise RuntimeError(f"SLM Generation failed: {e}")
             
-    def _generate_mock_schema(self, schema: Type[T]) -> T:
-        """Helper to generate a safe default object when the local model crashes (e.g. OOM on 16GB Windows)"""
-        # This is a naive mock just to prevent crashing the whole pipeline if torch OOMs
-        mock_data = {}
-        for name, field in schema.model_fields.items():
-            field_type = str(field.annotation).lower()
-            if "str" in field_type:
-                mock_data[name] = "Local Model Fallback Output"
-            elif "int" in field_type:
-                mock_data[name] = 0
-            elif "float" in field_type:
-                mock_data[name] = 0.0
-            elif "list" in field_type:
-                mock_data[name] = []
-            else:
-                mock_data[name] = None
-        try:
-            return schema(**mock_data)
-        except:
-            raise ValueError("Failed to create mock schema.")
+
 
 local_slm = LocalSLMProvider()

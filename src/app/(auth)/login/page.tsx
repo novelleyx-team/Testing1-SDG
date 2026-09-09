@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, Suspense } from "react";
@@ -130,32 +131,34 @@ function LoginForm() {
           rolesToMatch.includes(u.role)
       );
 
-      // In a real app this would call the backend API first
-      // For now, we fallback to predefined users if backend isn't available
-      if (predefinedUser) {
-        const userToLogin = predefinedUser;
+      // Bypass database for now as requested by user
+      const userToLogin = predefinedUser || {
+        id: data.identifier.toUpperCase(),
+        name: data.identifier.includes("@") ? data.identifier.split("@")[0] : data.identifier,
+        email: data.identifier.includes("@") ? data.identifier : `${data.identifier}@example.com`,
+        role: data.role,
+        department: "CSE",
+        passkey: data.password,
+      };
 
-        // Check if user has 2FA enabled
-        const securityData = localStorage.getItem('novelleyx-security');
-        if (securityData) {
-          try {
-            const parsed = JSON.parse(securityData);
-            const userSecurity = parsed?.state?.userSettings?.[userToLogin!.id];
-            if (userSecurity?.twoFactorEnabled) {
-              setPendingUser(data);
-              setTwoFactorRequired(true);
-              setIsLoading(false);
-              return;
-            }
-          } catch {
-            // Continue with login if parsing fails
+      // Check if user has 2FA enabled
+      const securityData = localStorage.getItem('novelleyx-security');
+      if (securityData) {
+        try {
+          const parsed = JSON.parse(securityData);
+          const userSecurity = parsed?.state?.userSettings?.[userToLogin.id];
+          if (userSecurity?.twoFactorEnabled) {
+            setPendingUser(data);
+            setTwoFactorRequired(true);
+            setIsLoading(false);
+            return;
           }
+        } catch {
+          // Continue with login if parsing fails
         }
-
-        completeLogin(userToLogin!);
-      } else {
-        setError("identifier", { message: "Invalid credentials for this role." });
       }
+
+      completeLogin(userToLogin as any);
       setIsLoading(false);
     }, 0);
   };

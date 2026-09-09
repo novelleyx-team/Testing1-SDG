@@ -37,7 +37,7 @@ export async function generatePdfFromHtml(htmlContent: string): Promise<Buffer> 
     </html>
   `;
 
-  await page.setContent(completeHtml, { waitUntil: ['load', 'networkidle0'] });
+  await page.setContent(completeHtml, { waitUntil: ['load'] });
 
   const pdfBuffer = await page.pdf({
     format: 'A4',

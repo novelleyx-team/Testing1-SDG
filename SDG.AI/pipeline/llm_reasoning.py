@@ -11,7 +11,7 @@ class SDGRelevanceEngine:
     def __init__(self, llm: BaseAIProvider):
         self.llm = llm
 
-    def map_sdgs(self, facts: List[BaseModel], output_schema: type[BaseModel]) -> BaseModel:
+    def map_sdgs(self, facts: List[BaseModel], knowledge_context: List[Dict[str, Any]], output_schema: type[BaseModel]) -> BaseModel:
         """Stage 7 & 8: Contextual Mapping and Logical Reasoning."""
         facts_list = [f.dict() for f in facts]
         prompt = f"""
@@ -21,6 +21,10 @@ class SDGRelevanceEngine:
         2. Differentiate between PRIMARY, SECONDARY, and POSSIBLE SDGs.
         3. Explain WHY each SDG is selected. Provide evidence from the facts.
         4. Every conclusion must have a deterministic evidence chain.
+        5. ONLY map to the SDGs provided in the "SDG Knowledge Base" below. Use the inclusion/exclusion criteria to make your decision.
+        
+        SDG Knowledge Base (STRICT GUIDELINES):
+        {json.dumps(knowledge_context, indent=2)}
         
         Verifiable Facts:
         {json.dumps(facts_list, indent=2)}
