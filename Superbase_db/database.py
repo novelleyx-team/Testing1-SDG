@@ -404,17 +404,24 @@ def get_departments():
     cursor.execute("SELECT * FROM departments")
     return cursor.fetchall()
 
-def create_user(user_id, name, email, role, avatar=None, college_id=None, department=None):
+def create_user(user_id, name, email, role, avatar=None, college_id=None, department=None, department_id=None):
     conn = get_db_connection()
     cursor = conn.cursor()
-    # Resolve department ID first
-    cursor.execute("SELECT id FROM departments WHERE name = %s", (department,))
-    dep_row = cursor.fetchone()
-    dep_id = dep_row[0] if dep_row else None
     
+    # Resolve department ID and Name
+    if department_id is not None:
+        cursor.execute("SELECT name FROM departments WHERE id = %s", (department_id,))
+        dep_row = cursor.fetchone()
+        if dep_row:
+            department = dep_row[0]
+    elif department is not None:
+        cursor.execute("SELECT id FROM departments WHERE name = %s", (department,))
+        dep_row = cursor.fetchone()
+        department_id = dep_row[0] if dep_row else None
+        
     query = """INSERT INTO users (id, name, email, role, avatar, college_id, department, department_id) 
                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"""
-    cursor.execute(query, (user_id, name, email, role, avatar, college_id, department, dep_id))
+    cursor.execute(query, (user_id, name, email, role, avatar, college_id, department, department_id))
     conn.commit()
     return user_id
 
@@ -434,17 +441,24 @@ def get_user(user_id):
 
 # --- PROJECTS ---
 
-def create_project(project_id, student_id, title, abstract, status, faculty_id, department, sdg_match_score):
+def create_project(project_id, student_id, title, abstract, status, faculty_id, department, sdg_match_score, department_id=None):
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    cursor.execute("SELECT id FROM departments WHERE name = %s", (department,))
-    dep_row = cursor.fetchone()
-    dep_id = dep_row[0] if dep_row else None
-    
+    # Resolve department ID and Name
+    if department_id is not None:
+        cursor.execute("SELECT name FROM departments WHERE id = %s", (department_id,))
+        dep_row = cursor.fetchone()
+        if dep_row:
+            department = dep_row[0]
+    elif department is not None:
+        cursor.execute("SELECT id FROM departments WHERE name = %s", (department,))
+        dep_row = cursor.fetchone()
+        department_id = dep_row[0] if dep_row else None
+        
     query = """INSERT INTO projects (id, student_id, title, abstract, status, faculty_id, department, department_id, sdg_match_score) 
                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
-    cursor.execute(query, (project_id, student_id, title, abstract, status, faculty_id, department, dep_id, sdg_match_score))
+    cursor.execute(query, (project_id, student_id, title, abstract, status, faculty_id, department, department_id, sdg_match_score))
     conn.commit()
     return project_id
 

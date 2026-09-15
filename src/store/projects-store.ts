@@ -7,6 +7,7 @@ export interface Project {
   studentId: string
   studentName: string
   studentDepartment: string
+  studentDepartmentId?: number
   title: string
   abstract: string
   techStack: string
@@ -53,6 +54,7 @@ export const useProjectsStore = create<ProjectsState>()(
               id: newProject.id,
               studentId: newProject.studentId,
               department: newProject.studentDepartment,
+              departmentId: newProject.studentDepartmentId,
               title: newProject.title,
               abstract: newProject.abstract,
               aiScore: newProject.aiScore

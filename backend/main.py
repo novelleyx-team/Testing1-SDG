@@ -97,12 +97,18 @@ app.add_middleware(
 )
 
 # --- User Auth Models ---
+@app.get("/api/departments")
+async def get_departments():
+    deps = db.get_departments()
+    return {"departments": deps}
+
 class UserRegister(BaseModel):
     id: str
     name: str
     email: str
     role: str
     department: str | None = None
+    department_id: int | None = None
     passkey: str | None = None
 
 class UserLogin(BaseModel):
@@ -113,6 +119,7 @@ class ProjectCreate(BaseModel):
     id: str
     studentId: str
     department: str
+    departmentId: int | None = None
     title: str
     abstract: str
     aiScore: str
@@ -126,7 +133,8 @@ async def register_user(user: UserRegister):
         name=user.name,
         email=user.email,
         role=user.role,
-        department=user.department
+        department=user.department,
+        department_id=user.department_id
     )
     if not user_id:
         raise HTTPException(status_code=500, detail="Failed to register user.")
@@ -164,7 +172,8 @@ async def save_project(project: ProjectCreate):
         status="Pending",
         faculty_id=None,
         department=project.department,
-        sdg_match_score=score
+        sdg_match_score=score,
+        department_id=project.departmentId
     )
     if not project_id:
         raise HTTPException(status_code=500, detail="Failed to save project to DB.")
@@ -231,6 +240,7 @@ async def get_job_status(job_id: str):
 class ProjectSubmission(BaseModel):
     student_name: str
     department: str
+    department_id: int | None = None
     title: str
     abstract: str
     keywords: str

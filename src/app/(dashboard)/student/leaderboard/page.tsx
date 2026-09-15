@@ -9,7 +9,7 @@ interface LeaderboardEntry {
   rank: number;
   name: string;
   id: string;
-  branch: string;
+  department: string;
   score: number;
   trend: string;
 }
@@ -112,7 +112,7 @@ export default function LeaderboardPage() {
               2
             </div>
             <h3 className="font-bold text-gray-900 dark:text-gray-100 text-lg">{top3[1]?.name || "—"}</h3>
-            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-1">{top3[1]?.branch || "—"}</p>
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-1">{top3[1]?.department || "—"}</p>
             <div className="mt-4 bg-gray-900 dark:bg-gray-700 text-white px-4 py-1.5 rounded-full text-sm font-black shadow-sm">
               {top3[1]?.score ?? "—"} pts
             </div>
@@ -128,7 +128,7 @@ export default function LeaderboardPage() {
               <Trophy size={32} className="text-white fill-white" />
             </div>
             <h3 className="font-black text-gray-900 dark:text-gray-100 text-xl">{top3[0]?.name || "—"}</h3>
-            <p className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mt-1">{top3[0]?.branch || "—"}</p>
+            <p className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mt-1">{top3[0]?.department || "—"}</p>
             <div className="mt-4 bg-amber-500 text-white px-5 py-2 rounded-full text-base font-black shadow-md">
               {top3[0]?.score ?? "—"} pts
             </div>
@@ -143,7 +143,7 @@ export default function LeaderboardPage() {
               3
             </div>
             <h3 className="font-bold text-gray-900 dark:text-gray-100 text-lg">{top3[2]?.name || "—"}</h3>
-            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-1">{top3[2]?.branch || "—"}</p>
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-1">{top3[2]?.department || "—"}</p>
             <div className="mt-4 bg-gray-900 dark:bg-gray-700 text-white px-4 py-1.5 rounded-full text-sm font-black shadow-sm">
               {top3[2]?.score ?? "—"} pts
             </div>
@@ -182,7 +182,7 @@ export default function LeaderboardPage() {
                     </td>
                     <td className="px-6 py-5">
                       <span className="font-semibold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full text-xs">
-                        {student.branch}
+                        {student.department}
                       </span>
                     </td>
                     <td className="px-6 py-5">

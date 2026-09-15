@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { UserCircle, Save } from "lucide-react";
 import { useState } from "react";
 import { ProfileImageManager } from "@/components/shared/profile-image-manager";
+import { DepartmentSelect } from "@/components/ui/department-select";
 
 export default function FacultyProfilePage() {
   const { user, updateProfile } = useAuthStore();
@@ -19,12 +20,15 @@ export default function FacultyProfilePage() {
     const newName = formData.get("name") as string;
     const newEmail = formData.get("email") as string;
     const newDepartment = formData.get("department") as string;
+    const newDepartmentIdStr = formData.get("departmentId") as string;
+    const newDepartmentId = newDepartmentIdStr ? parseInt(newDepartmentIdStr, 10) : undefined;
     
     if (newName && newName.trim() !== "") {
       updateProfile({ 
         name: newName, 
         email: newEmail,
-        department: newDepartment 
+        department: newDepartment,
+        departmentId: newDepartmentId
       });
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
@@ -82,25 +86,7 @@ export default function FacultyProfilePage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="department" className="text-gray-700 dark:text-gray-300 font-semibold">Department / Branch</Label>
-                <select
-                  id="department"
-                  name="department"
-                  defaultValue={user?.department || ""}
-                  className="flex h-10 w-full rounded-md border bg-gray-50/50 dark:bg-[#111827] border-gray-200 dark:border-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                >
-                  <option value="">Select Department</option>
-                  <option value="Computer Science">Computer Science</option>
-                  <option value="Computer Science Data (CSD)">Computer Science Data (CSD)</option>
-                  <option value="Artificial Intelligence & Machine Learning">AI & Machine Learning</option>
-                  <option value="Mechanical Engineering">Mechanical Engineering</option>
-                  <option value="Civil Engineering">Civil Engineering</option>
-                  <option value="Electronics & Communication">Electronics & Communication</option>
-                  <option value="Electrical Engineering">Electrical Engineering</option>
-                  <option value="Information Technology">Information Technology</option>
-                  <option value="MBA">MBA</option>
-                  <option value="Humanities & Sciences">Humanities & Sciences</option>
-                  <option value="Other">Other</option>
-                </select>
+                <DepartmentSelect value={user?.departmentId} />
                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Select the primary department you are associated with.</p>
               </div>
             </div>

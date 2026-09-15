@@ -168,7 +168,8 @@ function ProjectFormContent() {
     
     // Static fields
     const studentName = formData.get("name")?.toString() || user?.name || "Unknown";
-    const department = formData.get("department")?.toString() || user?.department || "Unknown";
+    const department = user?.department || "Unknown";
+    const selectedDepartmentId = user?.departmentId;
     
     if (["TPL-MAJOR", "TPL-MINOR", "TPL-CASUAL"].includes(selectedTemplateId)) {
       setSimulationPhase(2);
@@ -189,6 +190,7 @@ function ProjectFormContent() {
         studentId: user?.id || "STD-000",
         studentName,
         studentDepartment: department,
+        studentDepartmentId: selectedDepartmentId,
         title,
         abstract: abstract || "AI Check submission...",
         techStack: keywords,
@@ -226,6 +228,7 @@ function ProjectFormContent() {
         body: JSON.stringify({
           student_name: studentName,
           department: department,
+          department_id: selectedDepartmentId,
           title,
           abstract,
           keywords
@@ -285,6 +288,7 @@ function ProjectFormContent() {
         studentId: user?.id || "STD-000",
         studentName,
         studentDepartment: department,
+        studentDepartmentId: selectedDepartmentId,
         title,
         abstract,
         techStack: keywords,
@@ -488,7 +492,13 @@ function ProjectFormContent() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="department" className="text-gray-700 dark:text-gray-300 font-semibold">Department</Label>
-              <Input id="department" name="department" defaultValue="Computer Science & Engineering (CSE)" readOnly className="bg-gray-50 dark:bg-[#111827] text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 font-medium cursor-not-allowed h-12" />
+              <Input 
+                id="department" 
+                name="department" 
+                value={user?.department || "Unknown"} 
+                readOnly 
+                className="bg-gray-50 dark:bg-[#111827] text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 font-medium cursor-not-allowed h-12" 
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="year" className="text-gray-700 dark:text-gray-300 font-semibold">Academic Year</Label>

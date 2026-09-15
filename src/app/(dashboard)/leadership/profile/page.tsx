@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ProfileImageManager } from "@/components/shared/profile-image-manager";
+import { DepartmentSelect } from "@/components/ui/department-select";
 
 export default function LeadershipProfilePage() {
   const { user, updateProfile } = useAuthStore();
@@ -28,13 +29,16 @@ export default function LeadershipProfilePage() {
     const newEmail = formData.get("email") as string;
     const newDesignation = formData.get("designation") as string;
     const newDepartment = formData.get("department") as string;
+    const newDepartmentIdStr = formData.get("departmentId") as string;
+    const newDepartmentId = newDepartmentIdStr ? parseInt(newDepartmentIdStr, 10) : undefined;
     
     if (newName && newName.trim() !== "") {
       updateProfile({ 
         name: newName, 
         email: newEmail,
         designation: newDesignation,
-        department: newDepartment 
+        department: newDepartment,
+        departmentId: newDepartmentId
       });
       setSaveSuccess(true);
       setIsEditing(false);
@@ -161,20 +165,7 @@ export default function LeadershipProfilePage() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="department" className="text-slate-700 dark:text-gray-300">Department Scope</Label>
-                      <select
-                        id="department"
-                        name="department"
-                        defaultValue={user.department || ""}
-                        className="flex h-10 w-full rounded-md border bg-slate-50 dark:bg-gray-900 border-slate-200 dark:border-gray-700 px-3 py-2 text-sm text-slate-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-                      >
-                        <option value="">College-wide (No specific dept)</option>
-                        <option value="Computer Science">Computer Science</option>
-                        <option value="Artificial Intelligence & Machine Learning">AI & Machine Learning</option>
-                        <option value="Mechanical Engineering">Mechanical Engineering</option>
-                        <option value="Civil Engineering">Civil Engineering</option>
-                        <option value="Information Technology">Information Technology</option>
-                        <option value="MBA">MBA</option>
-                      </select>
+                      <DepartmentSelect value={user.departmentId} />
                     </div>
                   </div>
                   

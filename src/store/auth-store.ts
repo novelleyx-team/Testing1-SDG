@@ -10,6 +10,7 @@ export interface User {
   profileImage?: string;
   designation?: string;
   department?: string;
+  departmentId?: number;
   passkey?: string;
   identifier?: string;
   phoneNumber?: string;
@@ -47,6 +48,7 @@ export const useAuthStore = create<AuthState>()(
               name: backendUser.name,
               role: backendUser.role,
               department: backendUser.department,
+              departmentId: backendUser.department_id,
             };
             set({ user: fullUser });
           } else {
@@ -69,6 +71,7 @@ export const useAuthStore = create<AuthState>()(
               email: user.email,
               role: user.role,
               department: user.department,
+              department_id: user.departmentId,
               passkey: user.passkey
             })
           });

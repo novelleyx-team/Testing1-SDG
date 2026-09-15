@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Link from "next/link";
@@ -13,6 +13,7 @@ import { PREDEFINED_USERS, VALID_REGISTRATION_IDS } from "@/lib/constants/predef
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DepartmentSelect } from "@/components/ui/department-select";
 
 // --- SCHEMAS ---
 
@@ -39,7 +40,7 @@ const registerSchema = z.object({
     .regex(/[^A-Za-z0-9]/, { message: "Password must contain at least one special character." }),
   role: z.enum([Role.STUDENT, Role.FACULTY, Role.HOD, Role.DEAN], { message: "Please select a valid role to register." }),
   department: z.string().optional(),
-  branch: z.string().optional(),
+  departmentId: z.number().optional(),
   phoneNumber: z.string().min(10, { message: "Phone number is required (at least 10 digits)." }),
   githubUrl: z.string().optional(),
   confirmPassword: z.string()
@@ -51,19 +52,14 @@ const registerSchema = z.object({
       path: ["confirmPassword"],
     });
   }
-  if ((data.role === Role.FACULTY || data.role === Role.HOD) && !data.department) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Department is required.",
-      path: ["department"],
-    });
-  }
-  if (data.role === Role.STUDENT && !data.branch) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Branch is required for Students.",
-      path: ["branch"],
-    });
+  if (!data.department) {
+    if (data.role === Role.STUDENT || data.role === Role.FACULTY || data.role === Role.HOD) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: data.role === Role.STUDENT ? "Branch / Department is required." : "Department is required.",
+        path: ["department"],
+      });
+    }
   }
   if (data.role === Role.STUDENT && (!data.githubUrl || data.githubUrl.trim().length === 0)) {
     ctx.addIssue({
@@ -376,6 +372,8 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
     register,
     handleSubmit,
     watch,
+    control,
+    setValue,
     formState: { errors },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -387,7 +385,7 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
       confirmPassword: "",
       role: Role.STUDENT,
       department: "",
-      branch: "",
+      departmentId: undefined,
       phoneNumber: "",
       githubUrl: "",
     },
@@ -402,10 +400,9 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
     setTimeout(() => {
       const { registerUser } = useAuthStore.getState();
 
-      let department = data.department;
-      if (data.role === Role.STUDENT) {
-        department = data.branch;
-      } else if (data.role === Role.HOD || data.role === Role.DEAN) {
+      const department = data.department;
+      const departmentId = data.departmentId;
+      if (data.role === Role.HOD || data.role === Role.DEAN) {
         const entry = VALID_REGISTRATION_IDS.find(
           (e) => e.id === data.identifier.toUpperCase() && e.allowedRole === data.role
         );
@@ -420,6 +417,7 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
         email: data.email,
         role: data.role,
         department: department,
+        departmentId: departmentId,
         identifier: data.identifier,
         passkey: data.password,
         phoneNumber: data.phoneNumber,
@@ -505,57 +503,27 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
           </div>
         )}
 
-        {showDepartment && (
+        {(selectedRole === Role.STUDENT || showDepartment) && (
           <div className="space-y-1.5">
-            <Label htmlFor="department">Department</Label>
-            <select
-              id="department"
-              {...register("department")}
-              className={`flex h-10 w-full rounded-md border bg-white/50 dark:bg-gray-900/50 backdrop-blur-md border-white/40 dark:border-gray-700/50 px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm text-foreground transition-all duration-300 shadow-sm hover:bg-white/60 dark:hover:bg-gray-800/60 focus:bg-white/80 dark:focus:bg-gray-900/80 ${
-                errors.department ? "border-red-500 focus-visible:ring-red-500" : "border-input"
-              }`}
-            >
-              <option value="">Select Department</option>
-              <option value="Computer Science">Computer Science</option>
-              <option value="Computer Science Data (CSD)">Computer Science Data (CSD)</option>
-              <option value="Artificial Intelligence & Machine Learning">Artificial Intelligence & Machine Learning</option>
-              <option value="Mechanical Engineering">Mechanical Engineering</option>
-              <option value="Civil Engineering">Civil Engineering</option>
-              <option value="Electronics & Communication">Electronics & Communication</option>
-              <option value="Electrical Engineering">Electrical Engineering</option>
-              <option value="Information Technology">Information Technology</option>
-              <option value="Cyber Security">Cyber Security</option>
-              <option value="MBA">MBA</option>
-              {selectedRole === Role.FACULTY && <option value="Other">Other</option>}
-            </select>
+            <Label htmlFor="department">
+              {selectedRole === Role.STUDENT ? "Branch / Department" : "Department"}
+            </Label>
+            <Controller
+              name="department"
+              control={control}
+              render={({ field }) => (
+                <DepartmentSelect
+                  value={watch("departmentId")}
+                  onChange={(id, name) => {
+                    setValue("departmentId", id);
+                    field.onChange(name);
+                  }}
+                  className={errors.department ? "border-red-500 focus-visible:ring-red-500" : ""}
+                />
+              )}
+            />
             {errors.department && (
               <p className="text-sm text-red-500 font-medium">{errors.department.message}</p>
-            )}
-          </div>
-        )}
-
-        {selectedRole === Role.STUDENT && (
-          <div className="space-y-1.5">
-            <Label htmlFor="branch">Branch / Department</Label>
-            <select
-              id="branch"
-              {...register("branch")}
-              className={`flex h-10 w-full rounded-md border bg-white/50 dark:bg-gray-900/50 backdrop-blur-md border-white/40 dark:border-gray-700/50 px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm text-foreground transition-all duration-300 shadow-sm hover:bg-white/60 dark:hover:bg-gray-800/60 focus:bg-white/80 dark:focus:bg-gray-900/80 ${
-                errors.branch ? "border-red-500 focus-visible:ring-red-500" : "border-input"
-              }`}
-            >
-              <option value="">Select Branch</option>
-              <option value="Computer Science">Computer Science</option>
-              <option value="Computer Science Data (CSD)">Computer Science Data (CSD)</option>
-              <option value="Artificial Intelligence & Machine Learning">Artificial Intelligence & Machine Learning</option>
-              <option value="Mechanical Engineering">Mechanical Engineering</option>
-              <option value="Civil Engineering">Civil Engineering</option>
-              <option value="Electronics & Communication">Electronics & Communication</option>
-              <option value="Electrical Engineering">Electrical Engineering</option>
-              <option value="Other">Other</option>
-            </select>
-            {errors.branch && (
-              <p className="text-sm text-red-500 font-medium">{errors.branch.message}</p>
             )}
           </div>
         )}
