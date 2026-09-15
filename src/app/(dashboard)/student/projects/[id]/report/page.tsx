@@ -186,7 +186,7 @@ export default function ReportPage() {
           <div className="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 dark:border-yellow-600 p-4 mb-4">
             <h4 className="font-bold text-yellow-800 dark:text-yellow-400 font-sans mb-1 text-sm">Faculty / Reviewer Notes</h4>
             <p className="text-yellow-900 dark:text-yellow-300 italic text-sm">
-              &ldquo;Innovative approach. Consider elaborating on the long-term maintenance requirements to ensure true sustainability and exploring deeper partnerships as outlined in SDG 17.&rdquo;
+              &ldquo;{project.summary || "No reviewer notes have been added yet."}&rdquo;
             </p>
           </div>
         </div>

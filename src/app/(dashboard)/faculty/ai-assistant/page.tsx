@@ -10,14 +10,24 @@ export default function AIAssistantPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [result, setResult] = useState<string | null>(null)
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
     if (!input) return
     setIsAnalyzing(true)
-    // Simulate AI processing delay
-    setTimeout(() => {
-      setResult("Based on the abstract provided, the primary alignment is SDG 7: Affordable and Clean Energy (92% confidence), with a secondary alignment to SDG 13: Climate Action (78% confidence). The focus on renewable energy grids directly addresses target 7.2.")
+    setResult(null)
+    try {
+      const res = await fetch('/api/sdg/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ abstract: input }),
+      })
+      if (!res.ok) throw new Error('Analysis service unavailable')
+      const data = await res.json()
+      setResult(data.analysis || data.result || "Analysis completed but no detailed results were returned.")
+    } catch {
+      setResult("AI analysis service is currently unavailable. Please ensure the AI engine is running and try again later.")
+    } finally {
       setIsAnalyzing(false)
-    }, 2000)
+    }
   }
 
   return (

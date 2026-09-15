@@ -1,13 +1,14 @@
 "use client";
 
 import { useAuthStore } from "@/store/auth-store";
-import { useMemo, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { BarChart } from "@/features/analytics/components/bar-chart";
 import { LineChart } from "@/features/analytics/components/line-chart";
 import { DonutChart } from "@/features/analytics/components/donut-chart";
 import { PyramidChart } from "@/features/analytics/components/pyramid-chart";
 import { BarChart3, TrendingUp, Target, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useRealtimeChartData } from "@/hooks/useRealtimeChartData";
 
 
 
@@ -21,88 +22,67 @@ export default function LeadershipAnalyticsPage() {
 
   const userScope = user?.department || user?.designation || "College";
 
+  // Fetch all chart data from real database tables via realtime hooks
+  const { data: growthData } = useRealtimeChartData('leadership_yoy_submissions', 'month', 'count');
+  const { data: fundingDistribution } = useRealtimeChartData('leadership_funding_distribution', 'category', 'value');
+  const { data: sdgImpact } = useRealtimeChartData('leadership_quality_distribution', 'tier', 'value');
+  const { data: impactFunnel } = useRealtimeChartData('leadership_impact_funnel', 'stage', 'value');
 
-  const { growthData, fundingDistribution, sdgImpact, impactFunnel } = useMemo(() => {
-    return {
-      growthData: [
-        { name: "Jul", value: 120 },
-        { name: "Aug", value: 145 },
-        { name: "Sep", value: 180 },
-        { name: "Oct", value: 210 },
-        { name: "Nov", value: 240 },
-        { name: "Dec", value: 280 },
-        { name: "Jan", value: 310 },
-        { name: "Feb", value: 360 },
-        { name: "Mar", value: 410 },
-        { name: "Apr", value: 480 },
-        { name: "May", value: 530 },
-        { name: "Jun", value: 600 },
-      ],
-      fundingDistribution: [
-        { name: "Hardware & IoT", value: 45, color: "#3B82F6" },
-        { name: "Software Licenses", value: 25, color: "#8B5CF6" },
-        { name: "Community Events", value: 20, color: "#10B981" },
-        { name: "Research Pubs", value: 10, color: "#F59E0B" },
-      ],
-      sdgImpact: [
-        { name: "High Impact (>8)", value: 55, color: "#10B981" },
-        { name: "Medium Impact (5-8)", value: 35, color: "#3B82F6" },
-        { name: "Low Impact (<5)", value: 10, color: "#94A3B8" },
-      ],
-      impactFunnel: [
-        { name: "Students Trained", value: 1200, fill: "#3B82F6" },
-        { name: "Projects Initiated", value: 450, fill: "#8B5CF6" },
-        { name: "Projects Deployed", value: 120, fill: "#10B981" },
-        { name: "Real-world Impact", value: 35, fill: "#F59E0B" },
-      ]
-    };
+  // Fetch KPI stats from API
+  const [kpiStats, setKpiStats] = useState({ yoy_growth: "N/A", avg_sdg_impact: "N/A", faculty_engagement: "N/A", active_grants: "N/A" });
+
+  useEffect(() => {
+    fetch('/api/analytics/leadership')
+      .then(res => res.json())
+      .then(data => {
+        setKpiStats({
+          yoy_growth: data.yoy_growth ?? "N/A",
+          avg_sdg_impact: data.avg_sdg_impact ?? "N/A",
+          faculty_engagement: data.faculty_engagement ?? "N/A",
+          active_grants: data.active_grants ?? "N/A",
+        });
+      })
+      .catch(() => {
+        // Keep defaults — N/A
+      });
   }, []);
 
   if (!isMounted || !user) return null;
+
+  const kpis = [
+    { title: "YoY Project Growth", value: kpiStats.yoy_growth, icon: TrendingUp, color: "text-blue-500", bg: "bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/20 dark:to-[#1F2937]" },
+    { title: "Avg SDG Impact Score", value: kpiStats.avg_sdg_impact, icon: Target, color: "text-emerald-500", bg: "bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-900/20 dark:to-[#1F2937]" },
+    { title: "Faculty Engagement", value: kpiStats.faculty_engagement, icon: Users, color: "text-purple-500", bg: "bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/20 dark:to-[#1F2937]" },
+    { title: "Active Grants/Funds", value: kpiStats.active_grants, icon: BarChart3, color: "text-amber-500", bg: "bg-gradient-to-br from-amber-50 to-white dark:from-amber-900/20 dark:to-[#1F2937]" },
+  ];
 
   return (
     <div className="flex flex-col gap-6 p-6 xl:p-8 max-w-[1600px] mx-auto w-full animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-3">
-            <BarChart3 className="text-blue-600" size={32} />
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-gray-100 flex items-center gap-3">
+            <BarChart3 className="text-blue-600 dark:text-blue-500" size={32} />
             Analytics Hub
           </h1>
-          <p className="text-slate-500 mt-1 max-w-2xl">
-            Deep-dive metrics and trends aggregating performance across <span className="font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">{userScope}</span>.
+          <p className="text-slate-500 dark:text-gray-400 mt-1 max-w-2xl">
+            Deep-dive metrics and trends aggregating performance across <span className="font-semibold text-slate-700 dark:text-gray-200 bg-slate-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">{userScope}</span>.
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="rounded-xl shadow-sm border border-slate-200 bg-gradient-to-br from-blue-50 to-white">
-          <CardContent className="p-5">
-            <TrendingUp className="text-blue-500 mb-2" size={24} />
-            <h3 className="text-3xl font-bold text-slate-900">+34%</h3>
-            <p className="text-sm font-medium text-slate-500">YoY Project Growth</p>
-          </CardContent>
-        </Card>
-        <Card className="rounded-xl shadow-sm border border-slate-200 bg-gradient-to-br from-emerald-50 to-white">
-          <CardContent className="p-5">
-            <Target className="text-emerald-500 mb-2" size={24} />
-            <h3 className="text-3xl font-bold text-slate-900">8.4/10</h3>
-            <p className="text-sm font-medium text-slate-500">Avg SDG Impact Score</p>
-          </CardContent>
-        </Card>
-        <Card className="rounded-xl shadow-sm border border-slate-200 bg-gradient-to-br from-purple-50 to-white">
-          <CardContent className="p-5">
-            <Users className="text-purple-500 mb-2" size={24} />
-            <h3 className="text-3xl font-bold text-slate-900">85%</h3>
-            <p className="text-sm font-medium text-slate-500">Faculty Engagement</p>
-          </CardContent>
-        </Card>
-        <Card className="rounded-xl shadow-sm border border-slate-200 bg-gradient-to-br from-amber-50 to-white">
-          <CardContent className="p-5">
-            <BarChart3 className="text-amber-500 mb-2" size={24} />
-            <h3 className="text-3xl font-bold text-slate-900">12</h3>
-            <p className="text-sm font-medium text-slate-500">Active Grants/Funds</p>
-          </CardContent>
-        </Card>
+        {kpis.map((kpi, i) => {
+          const Icon = kpi.icon;
+          return (
+            <Card key={i} className={`rounded-xl shadow-sm border border-slate-200 dark:border-gray-800 ${kpi.bg}`}>
+              <CardContent className="p-5">
+                <Icon className={`${kpi.color} mb-2`} size={24} />
+                <h3 className="text-3xl font-bold text-slate-900 dark:text-gray-100">{kpi.value}</h3>
+                <p className="text-sm font-medium text-slate-500 dark:text-gray-400">{kpi.title}</p>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
@@ -132,37 +112,36 @@ export default function LeadershipAnalyticsPage() {
         />
       </div>
 
-      <Card className="rounded-xl shadow-sm border border-slate-200 mt-6">
-        <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
-          <CardTitle className="text-lg font-bold text-slate-800">Monthly Growth & Submissions Data</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="text-xs text-slate-500 uppercase bg-white">
-                <tr className="border-b border-slate-100">
-                  <th className="px-6 py-4 font-medium">Month</th>
-                  <th className="px-6 py-4 font-medium text-center">New Projects Submitted</th>
-                  <th className="px-6 py-4 font-medium text-right">YoY Change</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {growthData.map((data, i) => (
-                  <tr key={i} className="hover:bg-slate-50/80 transition-colors bg-white">
-                    <td className="px-6 py-4 font-semibold text-slate-900">{data.name}</td>
-                    <td className="px-6 py-4 text-center font-bold text-slate-700">
-                      {data.value}
-                    </td>
-                    <td className="px-6 py-4 text-right text-emerald-600 font-medium">
-                      +12.4%
-                    </td>
+      {/* Data table — only shown when growth data exists */}
+      {growthData && growthData.length > 0 && (
+        <Card className="rounded-xl shadow-sm border border-slate-200 dark:border-gray-800 mt-6 bg-white dark:bg-[#1F2937]">
+          <CardHeader className="bg-slate-50/50 dark:bg-gray-800/50 border-b border-slate-100 dark:border-gray-800 pb-4">
+            <CardTitle className="text-lg font-bold text-slate-800 dark:text-gray-100">Monthly Growth & Submissions Data</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="text-xs text-slate-500 dark:text-gray-400 uppercase bg-white dark:bg-[#1F2937]">
+                  <tr className="border-b border-slate-100 dark:border-gray-800">
+                    <th className="px-6 py-4 font-medium">Month</th>
+                    <th className="px-6 py-4 font-medium text-center">New Projects Submitted</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-gray-800">
+                  {growthData.map((data, i) => (
+                    <tr key={i} className="hover:bg-slate-50/80 dark:hover:bg-gray-800/30 transition-colors bg-white dark:bg-[#1F2937]">
+                      <td className="px-6 py-4 font-semibold text-slate-900 dark:text-gray-100">{data.name}</td>
+                      <td className="px-6 py-4 text-center font-bold text-slate-700 dark:text-gray-300">
+                        {data.value}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

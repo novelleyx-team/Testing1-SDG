@@ -84,7 +84,7 @@ export default function StudentDashboard() {
           </div>
           <div className="mt-6">
             <div className="h-2 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-              <div className="h-full bg-blue-600 rounded-full w-[70%] transition-all duration-0"></div>
+              <div className="h-full bg-blue-600 rounded-full transition-all duration-0" style={{width: `${Math.min(analytics.total_projects * 20, 100)}%`}}></div>
             </div>
           </div>
         </Card>
@@ -148,32 +148,28 @@ export default function StudentDashboard() {
                 <div className="p-2.5 bg-blue-600 rounded-xl text-white shadow-md">
                   <Lightbulb size={20} />
                 </div>
-                <h3 className="text-[18px] font-bold text-gray-900 dark:text-gray-100">Today&apos;s AI Suggestions</h3>
+                <h3 className="text-[18px] font-bold text-gray-900 dark:text-gray-100">AI Suggestions</h3>
               </div>
               <div className="space-y-4">
                 <div className="flex items-start gap-4">
                   <CheckCircle2 className="text-green-500 mt-0.5 shrink-0" size={18} />
-                  <p className="text-[15px] text-gray-700 dark:text-gray-300">Your latest abstract could better align with <strong className="text-gray-900 dark:text-gray-100">SDG 13 (Climate Action)</strong> by focusing on mitigation strategies.</p>
+                  <p className="text-[15px] text-gray-700 dark:text-gray-300">
+                    You have <strong className="text-gray-900 dark:text-gray-100">{studentProjects.length} project{studentProjects.length !== 1 ? 's' : ''}</strong> submitted.
+                    {studentProjects.filter(p => p.status === 'Pending').length > 0 && <> <strong className="text-amber-600">{studentProjects.filter(p => p.status === 'Pending').length}</strong> pending review.</>}
+                  </p>
                 </div>
-                <div className="flex items-start gap-4">
-                  <CheckCircle2 className="text-green-500 mt-0.5 shrink-0" size={18} />
-                  <div className="text-[15px] text-gray-700 dark:text-gray-300">
-                    Add these high-impact keywords to your submission:
-                    <div className="flex gap-2 mt-3">
-                      <span className="px-3 py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs font-semibold text-gray-600 dark:text-gray-300 shadow-sm">Renewable Energy</span>
-                      <span className="px-3 py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs font-semibold text-gray-600 dark:text-gray-300 shadow-sm">Carbon Emission</span>
-                      <span className="px-3 py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs font-semibold text-gray-600 dark:text-gray-300 shadow-sm">Sustainability</span>
-                    </div>
+                {studentProjects[0]?.targetSdg && studentProjects[0].targetSdg !== 'N/A' && (
+                  <div className="flex items-start gap-4">
+                    <CheckCircle2 className="text-green-500 mt-0.5 shrink-0" size={18} />
+                    <p className="text-[15px] text-gray-700 dark:text-gray-300">
+                      Your latest project targets <strong className="text-gray-900 dark:text-gray-100">{studentProjects[0].targetSdg}</strong>. Review your AI analysis for detailed alignment insights.
+                    </p>
                   </div>
-                </div>
+                )}
               </div>
-              <div className="mt-8 pt-6 border-t border-blue-100/60 dark:border-blue-900/40 flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Estimated Score Improvement</p>
-                  <p className="text-2xl font-black text-green-600 mt-1">+0.7 pts</p>
-                </div>
+              <div className="mt-8 pt-6 border-t border-blue-100/60 dark:border-blue-900/40 flex items-center justify-end">
                 <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-6 py-6 font-semibold shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] transition-all hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:-translate-y-0.5 group">
-                  Improve Project <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                  View AI Analysis <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </div>
             </Card>

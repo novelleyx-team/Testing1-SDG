@@ -49,6 +49,9 @@ export default function AchievementsPage() {
 
   const allBadges = [...dynamicBadges, ...globalBadges];
 
+  const unlockedCount = allBadges.filter((b: { unlocked?: boolean }) => b.unlocked).length;
+  const level = unlockedCount === 0 ? 1 : Math.min(Math.floor(unlockedCount / 2) + 1, 10);
+
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-20 animate-in fade-in duration-0">
       
@@ -59,7 +62,7 @@ export default function AchievementsPage() {
         </div>
         <div className="flex items-center gap-2 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-500 px-4 py-2 rounded-full border border-yellow-200 dark:border-yellow-800/50 shadow-sm">
           <Star size={16} className="fill-yellow-500" />
-          <span className="text-sm font-bold tracking-wide">LEVEL 4 SCHOLAR</span>
+          <span className="text-sm font-bold tracking-wide">LEVEL {level} SCHOLAR</span>
         </div>
       </div>
 
