@@ -214,55 +214,7 @@ Provide a detailed, rigorous, and highly critical analysis. Be specific and iden
     }
 
     if (!aiReportData) {
-      // Fallback to mocked data if AI fails or key is missing
-      aiReportData = {
-        report_version: "1.0",
-        project: {
-          title: data.title || 'Untitled Project',
-          student_name: data.studentName || 'Student Name',
-          roll_number: data.studentId || '',
-          guide_name: data.guideName || '',
-          department: data.studentDepartment || '',
-          academic_year: '2026-2027',
-          institution: 'Institution Name',
-          description: data.abstract || ''
-        },
-        executive_summary: data.summary || data.abstract || 'Project analysis summary.',
-        sdg_analysis: [
-          {
-            sdg_id: 9,
-            name: data.targetSdg || 'SDG 9: Industry, Innovation and Infrastructure',
-            classification: 'primary',
-            alignment_score: parseInt(data.aiScore) || 85,
-            confidence: (parseInt(data.aiScore) || 85) / 100,
-            reason: 'Mapped based on project analysis.',
-            targets: [],
-            evidence: [],
-            missing_evidence: [],
-            recommended_kpis: []
-          }
-        ],
-        impact_analysis: {
-          environmental: { score: 85, analysis: 'Environmental impact analysis details.', key_factors: [], type: 'Estimated' },
-          social: { score: 80, analysis: 'Social impact analysis details.', key_factors: [], type: 'Estimated' },
-          economic: { score: 75, analysis: 'Economic impact analysis details.', key_factors: [], type: 'Estimated' }
-        },
-        scores: {
-          overall: parseInt(data.aiScore) || 85,
-          sdg_alignment: 85,
-          evidence: 80,
-          impact: 85,
-          measurability: 75,
-          scalability: 80,
-          sustainability: 90
-        },
-        kpis: ["Number of users reached", "Percentage reduction in emissions"],
-        strengths: ['Innovative approach', 'Clear problem statement'],
-        weaknesses: ["Lacks clear financial model"],
-        recommendations: ["Partner with local NGOs", "Improve data collection framework"],
-        future_potential: 'High potential for scaling.',
-        conclusion: 'The project aligns well with SDG goals, but requires Gemini API Key for deep analysis.'
-      };
+      throw new Error("Gemini AI Analysis Failed. Please ensure your GEMINI_API_KEY is properly configured in .env.local and that your quota is valid. Fake/mocked data generation has been disabled per request.");
     }
 
     // 2. Render React Component to Static HTML String

@@ -19,15 +19,11 @@ export function PdfGeneratorButton({ reportId, className = "", text = "Download 
     try {
       setStatus("processing");
       
-      const project = projects.find(p => p.id === reportId) || {
-        title: "Unknown Project",
-        studentName: "Unknown Student",
-        studentId: reportId,
-        studentDepartment: "Unknown Department",
-        abstract: "No abstract available.",
-        aiScore: "85",
-        targetSdg: "SDG 9"
-      };
+      const project = projects.find(p => p.id === reportId);
+      
+      if (!project) {
+        throw new Error("Project data not found in local store. Please try re-submitting or ensuring your project is saved.");
+      }
 
       // Fetch the generated PDF directly from the Next.js API
       const res = await fetch(`/api/pdf/generate?projectId=${reportId}`, {

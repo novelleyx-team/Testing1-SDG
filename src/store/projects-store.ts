@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 
 export type ProjectStatus = 'Pending' | 'Approved' | 'Revision' | 'Rejected'
 
@@ -35,57 +36,62 @@ interface ProjectsState {
 }
 
 export const useProjectsStore = create<ProjectsState>()(
-  (set, get) => ({
-    projects: [],
-      addProject: async (projectData) => {
-        const newProject: Project = {
-          ...projectData,
-          id: projectData.id || `PRJ-${Math.floor(1000 + Math.random() * 9000)}`,
-          date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-          status: 'Pending',
-        }
-
-        // Sync with MySQL database
-        try {
-          await fetch('/api/projects', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              id: newProject.id,
-              studentId: newProject.studentId,
-              department: newProject.studentDepartment,
-              departmentId: newProject.studentDepartmentId,
-              title: newProject.title,
-              abstract: newProject.abstract,
-              aiScore: newProject.aiScore
-            })
-          });
-        } catch (e) {
-          console.error("Failed to sync project to DB:", e);
-        }
-
-        set((state) => ({
-          projects: [newProject, ...state.projects]
-        }))
-      },
-      updateProjectStatus: (id, status) => {
-        set((state) => ({
-          projects: state.projects.map(p => p.id === id ? { ...p, status } : p)
-        }))
-      },
-      fetchStudentProjects: async (studentId) => {
-        try {
-          const res = await fetch(`/api/projects/${studentId}`);
-          if (res.ok) {
-            const data = await res.json();
-            set({ projects: data.projects });
+  persist(
+    (set, get) => ({
+      projects: [],
+        addProject: async (projectData) => {
+          const newProject: Project = {
+            ...projectData,
+            id: projectData.id || `PRJ-${Math.floor(1000 + Math.random() * 9000)}`,
+            date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+            status: 'Pending',
           }
-        } catch (e) {
-          console.error("Failed to fetch projects from DB:", e);
+
+          // Sync with MySQL database
+          try {
+            await fetch('/api/projects', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                id: newProject.id,
+                studentId: newProject.studentId,
+                department: newProject.studentDepartment,
+                departmentId: newProject.studentDepartmentId,
+                title: newProject.title,
+                abstract: newProject.abstract,
+                aiScore: newProject.aiScore
+              })
+            });
+          } catch (e) {
+            console.error("Failed to sync project to DB:", e);
+          }
+
+          set((state) => ({
+            projects: [newProject, ...state.projects]
+          }))
+        },
+        updateProjectStatus: (id, status) => {
+          set((state) => ({
+            projects: state.projects.map(p => p.id === id ? { ...p, status } : p)
+          }))
+        },
+        fetchStudentProjects: async (studentId) => {
+          try {
+            const res = await fetch(`/api/projects/${studentId}`);
+            if (res.ok) {
+              const data = await res.json();
+              set({ projects: data.projects });
+            }
+          } catch (e) {
+            console.error("Failed to fetch projects from DB:", e);
+          }
+        },
+        getDepartmentProjects: (department) => {
+          return get().projects.filter(p => p.studentDepartment === department)
         }
-      },
-      getDepartmentProjects: (department) => {
-        return get().projects.filter(p => p.studentDepartment === department)
-      }
-  })
+    }),
+    {
+      name: 'projects-storage',
+    }
+  )
 )
