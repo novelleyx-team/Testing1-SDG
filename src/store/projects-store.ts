@@ -28,7 +28,7 @@ export interface Project {
 
 interface ProjectsState {
   projects: Project[]
-  addProject: (project: Omit<Project, 'id' | 'date' | 'status'>) => Promise<void>
+  addProject: (project: Omit<Project, 'id' | 'date' | 'status'> & { id?: string }) => Promise<void>
   updateProjectStatus: (id: string, status: ProjectStatus) => void
   fetchStudentProjects: (studentId: string) => Promise<void>
   getDepartmentProjects: (department: string) => Project[]
@@ -40,7 +40,7 @@ export const useProjectsStore = create<ProjectsState>()(
       addProject: async (projectData) => {
         const newProject: Project = {
           ...projectData,
-          id: `PRJ-${Math.floor(1000 + Math.random() * 9000)}`,
+          id: projectData.id || `PRJ-${Math.floor(1000 + Math.random() * 9000)}`,
           date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
           status: 'Pending',
         }

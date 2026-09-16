@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Download, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useProjectsStore } from '@/store/projects-store';
 
 interface PdfGeneratorButtonProps {
   reportId: string;
@@ -12,24 +13,57 @@ interface PdfGeneratorButtonProps {
 export function PdfGeneratorButton({ reportId, className = "", text = "Download Official PDF Report" }: PdfGeneratorButtonProps) {
   const [status, setStatus] = useState<"idle" | "queued" | "processing" | "completed" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const { projects } = useProjectsStore();
 
   const handleGenerate = async () => {
     try {
-      setStatus("queued");
+      setStatus("processing");
       
-      // Trigger generation
-      const res = await fetch(`http://127.0.0.1:8000/api/reports/${reportId}/pdf`, {
-        method: "POST"
+      const project = projects.find(p => p.id === reportId) || {
+        title: "Unknown Project",
+        studentName: "Unknown Student",
+        studentId: reportId,
+        studentDepartment: "Unknown Department",
+        abstract: "No abstract available.",
+        aiScore: "85",
+        targetSdg: "SDG 9"
+      };
+
+      // Fetch the generated PDF directly from the Next.js API
+      const res = await fetch(`/api/pdf/generate?projectId=${reportId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(project)
       });
       
       if (!res.ok) {
-        throw new Error("Failed to start PDF generation");
+        throw new Error("Failed to generate PDF");
       }
       
-      const { job_id } = await res.json();
+      // Download the PDF blob
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
       
-      // Poll for status
-      pollStatus(job_id);
+      // Extract filename from Content-Disposition header if available, otherwise fallback
+      const disposition = res.headers.get('content-disposition');
+      let filename = `Report_${reportId}.pdf`;
+      if (disposition && disposition.indexOf('filename=') !== -1) {
+          const matches = /filename="([^"]*)"/.exec(disposition);
+          if (matches != null && matches[1]) filename = matches[1];
+      }
+      
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+      
+      setStatus("completed");
+      setTimeout(() => setStatus("idle"), 5000);
     } catch (err) {
       const e = err as Error;
       console.error(e);
@@ -38,40 +72,11 @@ export function PdfGeneratorButton({ reportId, className = "", text = "Download 
     }
   };
 
-  const pollStatus = async (jobId: string) => {
-    try {
-      const res = await fetch(`http://127.0.0.1:8000/api/reports/${reportId}/pdf/status?job_id=${jobId}`);
-      if (!res.ok) throw new Error("Status check failed");
-      
-      const data = await res.json();
-      
-      if (data.status === "COMPLETED") {
-        setStatus("completed");
-        // Trigger actual download
-        window.open(`http://127.0.0.1:8000/api/reports/${reportId}/pdf/download`, "_blank");
-        // Reset after a delay so they can download again if needed
-        setTimeout(() => setStatus("idle"), 5000);
-      } else if (data.status === "FAILED" || data.status === "ERROR") {
-        setStatus("error");
-        setErrorMsg(data.error || "Generation failed");
-      } else {
-        setStatus(data.status.toLowerCase() as "idle" | "queued" | "processing" | "completed" | "error");
-        // Continue polling
-        setTimeout(() => pollStatus(jobId), 2000);
-      }
-    } catch (err) {
-      const e = err as Error;
-      console.error(e);
-      setStatus("error");
-      setErrorMsg(e.message);
-    }
-  };
-
   if (status === "queued" || status === "processing") {
     return (
       <button disabled className={`flex items-center justify-center gap-2 opacity-80 cursor-wait ${className}`}>
         <Loader2 className="w-5 h-5 animate-spin" /> 
-        {status === "queued" ? "Queued for Generation..." : "Rendering PDF..."}
+        {status === "queued" ? "Queued for Generation..." : "Analyzing with AI & Rendering PDF..."}
       </button>
     );
   }

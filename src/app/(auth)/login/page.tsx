@@ -38,7 +38,7 @@ const registerSchema = z.object({
     .regex(/[a-z]/, { message: "Password must contain at least one lowercase letter." })
     .regex(/[0-9]/, { message: "Password must contain at least one number." })
     .regex(/[^A-Za-z0-9]/, { message: "Password must contain at least one special character." }),
-  role: z.enum([Role.STUDENT, Role.FACULTY, Role.HOD, Role.DEAN], { message: "Please select a valid role to register." }),
+  role: z.enum([Role.STUDENT, Role.FACULTY, Role.HOD], { message: "Please select a valid role to register." }),
   department: z.string().optional(),
   departmentId: z.number().optional(),
   phoneNumber: z.string().min(10, { message: "Phone number is required (at least 10 digits)." }),
@@ -115,7 +115,7 @@ function LoginForm() {
 
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
-    setTimeout(() => {
+    setTimeout(async () => {
       const rolesToMatch = LEADERSHIP_ROLES.includes(data.role)
         ? LEADERSHIP_ROLES
         : [data.role];
@@ -154,13 +154,13 @@ function LoginForm() {
         }
       }
 
-      completeLogin(userToLogin as any);
+      await completeLogin(userToLogin as any);
       setIsLoading(false);
     }, 0);
   };
 
-  const completeLogin = (userToLogin: User) => {
-    login({
+  const completeLogin = async (userToLogin: User) => {
+    await login({
       id: userToLogin.id,
       name: userToLogin.name,
       email: userToLogin.email,
@@ -181,7 +181,7 @@ function LoginForm() {
     router.push(routes[userToLogin.role as Role] || "/student");
   };
 
-  const handleTwoFactorVerify = () => {
+  const handleTwoFactorVerify = async () => {
     if (!pendingUser || twoFactorCode.length !== 6) return;
     
     setIsLoading(true);
@@ -205,7 +205,7 @@ function LoginForm() {
           const parsed = JSON.parse(securityData);
           const userSecurity = parsed?.state?.userSettings?.[userToLogin.id];
           if (userSecurity?.twoFactorEnabled && twoFactorCode.length === 6) {
-            completeLogin(userToLogin);
+            await completeLogin(userToLogin);
             setTwoFactorRequired(false);
             setPendingUser(null);
             setTwoFactorCode("");
@@ -288,11 +288,9 @@ function LoginForm() {
           <Label htmlFor="identifier">
             {selectedRole === Role.STUDENT
               ? "Roll Number"
-              : selectedRole === Role.ADMIN
-                ? "Admin ID / Email"
-                : (selectedRole === Role.FACULTY || selectedRole === Role.HOD || selectedRole === Role.DEAN || selectedRole === Role.LEADERSHIP)
-                  ? "Faculty ID / Email"
-                  : "Email Address"}
+              : (selectedRole === Role.FACULTY || selectedRole === Role.HOD || selectedRole === Role.LEADERSHIP)
+                ? "Faculty ID / Email"
+                : "Email Address"}
           </Label>
           <Input
             id="identifier"
@@ -300,11 +298,9 @@ function LoginForm() {
             placeholder={
               selectedRole === Role.STUDENT
                 ? "e.g., 20R11A0501"
-                : selectedRole === Role.ADMIN
-                  ? "e.g., ADMIN_01"
-                  : (selectedRole === Role.FACULTY || selectedRole === Role.HOD || selectedRole === Role.DEAN || selectedRole === Role.LEADERSHIP)
-                    ? "e.g., MLRS10001"
-                    : "name@institution.edu"
+                : (selectedRole === Role.FACULTY || selectedRole === Role.HOD || selectedRole === Role.LEADERSHIP)
+                  ? "e.g., MLRS10001"
+                  : "name@institution.edu"
             }
             autoComplete="username"
             {...register("identifier")}
@@ -349,8 +345,6 @@ function LoginForm() {
             <option value={Role.STUDENT}>{ROLE_NAMES[Role.STUDENT]}</option>
             <option value={Role.FACULTY}>{ROLE_NAMES[Role.FACULTY]}</option>
             <option value={Role.HOD}>{ROLE_NAMES[Role.HOD]}</option>
-            <option value={Role.DEAN}>{ROLE_NAMES[Role.DEAN]}</option>
-            <option value={Role.ADMIN}>{ROLE_NAMES[Role.ADMIN]}</option>
           </select>
           {errors.role && (
             <p className="text-sm text-red-500 font-medium">{errors.role.message}</p>
@@ -393,16 +387,16 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
 
   const selectedRole = watch("role");
   const showDepartment = selectedRole === Role.FACULTY || selectedRole === Role.HOD;
-  const isLeadershipRole = selectedRole === Role.HOD || selectedRole === Role.DEAN;
+  const isLeadershipRole = selectedRole === Role.HOD;
 
   const onSubmit = async (data: RegisterFormValues) => {
     setIsLoading(true);
     setTimeout(() => {
       const { registerUser } = useAuthStore.getState();
 
-      const department = data.department;
+      let department = data.department;
       const departmentId = data.departmentId;
-      if (data.role === Role.HOD || data.role === Role.DEAN) {
+      if (data.role === Role.HOD) {
         const entry = VALID_REGISTRATION_IDS.find(
           (e) => e.id === data.identifier.toUpperCase() && e.allowedRole === data.role
         );
@@ -435,7 +429,6 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
       case Role.STUDENT: return "Roll Number";
       case Role.FACULTY: return "Faculty Registration ID";
       case Role.HOD: return "HOD Registration ID";
-      case Role.DEAN: return "Dean Registration ID";
       default: return "Identifier";
     }
   };
@@ -445,7 +438,6 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
       case Role.STUDENT: return "e.g., 20R11A0501";
       case Role.FACULTY: return "e.g., FAC-CSE-001";
       case Role.HOD: return "e.g., HOD-CSE-001";
-      case Role.DEAN: return "e.g., DEAN-ACAD-001";
       default: return "Enter your ID";
     }
   };
@@ -488,7 +480,6 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
             <option value={Role.STUDENT}>Student</option>
             <option value={Role.FACULTY}>Faculty</option>
             <option value={Role.HOD}>Head of Department (HOD)</option>
-            <option value={Role.DEAN}>Dean</option>
           </select>
           {errors.role && (
             <p className="text-sm text-red-500 font-medium">{errors.role.message}</p>
@@ -498,7 +489,7 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
         {isLeadershipRole && (
           <div className="rounded-md bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 p-3">
             <p className="text-sm text-amber-800 dark:text-amber-300">
-              ⚠️ <strong>{selectedRole === Role.HOD ? "HOD" : "Dean"}</strong> registration requires a valid Registration ID issued by the administrator.
+              ⚠️ <strong>HOD</strong> registration requires a valid Registration ID issued by the administrator.
             </p>
           </div>
         )}
@@ -622,8 +613,7 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
         <Button type="submit" className="w-full bg-blue-600/90 hover:bg-blue-600 backdrop-blur-sm shadow-lg shadow-blue-600/20 transition-all duration-300" disabled={isLoading}>
           {isLoading ? "Creating account..." : `Register as ${
             selectedRole === Role.STUDENT ? "Student" :
-            selectedRole === Role.FACULTY ? "Faculty" :
-            selectedRole === Role.HOD ? "HOD" : "Dean"
+            selectedRole === Role.FACULTY ? "Faculty" : "HOD"
           }`}
         </Button>
       </form>

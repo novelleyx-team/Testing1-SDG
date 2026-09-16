@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generatePdfFromHtml } from "@/lib/reports/pdf_renderer";
 import { ReportTemplate } from "@/lib/reports/templates/ReportTemplate";
+import { GoogleGenAI, Type, Schema } from "@google/genai";
 const { renderToStaticMarkup } = require("react-dom/server");
 
 export async function GET(request: NextRequest) {
@@ -86,12 +87,201 @@ export async function GET(request: NextRequest) {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="NOVELLEYX_SDG_Report_${aiReportData.project.title.replace(/\\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf"`
+        'Content-Disposition': `attachment; filename="NOVELLEYX_SDG_Report_${aiReportData.project.title.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf"`
       }
     });
 
   } catch (error) {
     console.error("PDF Generation Error:", error);
+    return NextResponse.json(
+      { error: "Failed to generate PDF report" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const data = await request.json();
+    let aiReportData: any = null;
+
+    if (process.env.GEMINI_API_KEY) {
+      try {
+        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        
+        const prompt = `Analyze the following student project for its alignment with the UN Sustainable Development Goals (SDGs) and its potential impact. 
+Project Title: ${data.title}
+Department: ${data.studentDepartment}
+Abstract: ${data.abstract}
+
+Provide a detailed, rigorous, and highly critical analysis. Be specific and identify at least one primary SDG. Rate the impact realistically.`;
+
+        const responseSchema: Schema = {
+          type: Type.OBJECT,
+          properties: {
+            executive_summary: { type: Type.STRING },
+            sdg_analysis: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  sdg_id: { type: Type.INTEGER },
+                  name: { type: Type.STRING },
+                  classification: { type: Type.STRING },
+                  alignment_score: { type: Type.INTEGER },
+                  confidence: { type: Type.NUMBER },
+                  reason: { type: Type.STRING },
+                  targets: { type: Type.ARRAY, items: { type: Type.STRING } },
+                  evidence: { type: Type.ARRAY, items: { type: Type.STRING } },
+                  missing_evidence: { type: Type.ARRAY, items: { type: Type.STRING } },
+                  recommended_kpis: { type: Type.ARRAY, items: { type: Type.STRING } }
+                },
+                required: ["sdg_id", "name", "classification", "alignment_score", "confidence", "reason", "targets", "evidence", "missing_evidence", "recommended_kpis"]
+              }
+            },
+            impact_analysis: {
+              type: Type.OBJECT,
+              properties: {
+                environmental: {
+                  type: Type.OBJECT,
+                  properties: { score: { type: Type.INTEGER }, analysis: { type: Type.STRING }, key_factors: { type: Type.ARRAY, items: { type: Type.STRING } }, type: { type: Type.STRING } },
+                  required: ["score", "analysis", "key_factors", "type"]
+                },
+                social: {
+                  type: Type.OBJECT,
+                  properties: { score: { type: Type.INTEGER }, analysis: { type: Type.STRING }, key_factors: { type: Type.ARRAY, items: { type: Type.STRING } }, type: { type: Type.STRING } },
+                  required: ["score", "analysis", "key_factors", "type"]
+                },
+                economic: {
+                  type: Type.OBJECT,
+                  properties: { score: { type: Type.INTEGER }, analysis: { type: Type.STRING }, key_factors: { type: Type.ARRAY, items: { type: Type.STRING } }, type: { type: Type.STRING } },
+                  required: ["score", "analysis", "key_factors", "type"]
+                }
+              },
+              required: ["environmental", "social", "economic"]
+            },
+            scores: {
+              type: Type.OBJECT,
+              properties: {
+                overall: { type: Type.INTEGER },
+                sdg_alignment: { type: Type.INTEGER },
+                evidence: { type: Type.INTEGER },
+                impact: { type: Type.INTEGER },
+                measurability: { type: Type.INTEGER },
+                scalability: { type: Type.INTEGER },
+                sustainability: { type: Type.INTEGER }
+              },
+              required: ["overall", "sdg_alignment", "evidence", "impact", "measurability", "scalability", "sustainability"]
+            },
+            kpis: { type: Type.ARRAY, items: { type: Type.STRING } },
+            strengths: { type: Type.ARRAY, items: { type: Type.STRING } },
+            weaknesses: { type: Type.ARRAY, items: { type: Type.STRING } },
+            recommendations: { type: Type.ARRAY, items: { type: Type.STRING } },
+            future_potential: { type: Type.STRING },
+            conclusion: { type: Type.STRING }
+          },
+          required: ["executive_summary", "sdg_analysis", "impact_analysis", "scores", "kpis", "strengths", "weaknesses", "recommendations", "future_potential", "conclusion"]
+        };
+
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: prompt,
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: responseSchema,
+          }
+        });
+        
+        const generatedData = JSON.parse(response.text || "{}");
+        aiReportData = {
+          report_version: "1.0",
+          project: {
+            title: data.title || 'Untitled Project',
+            student_name: data.studentName || 'Student Name',
+            roll_number: data.studentId || '',
+            guide_name: data.guideName || '',
+            department: data.studentDepartment || '',
+            academic_year: '2026-2027',
+            institution: 'Institution Name',
+            description: data.abstract || ''
+          },
+          ...generatedData
+        };
+      } catch (aiError) {
+        console.error("Gemini AI Analysis Error:", aiError);
+        // Fallback below
+      }
+    }
+
+    if (!aiReportData) {
+      // Fallback to mocked data if AI fails or key is missing
+      aiReportData = {
+        report_version: "1.0",
+        project: {
+          title: data.title || 'Untitled Project',
+          student_name: data.studentName || 'Student Name',
+          roll_number: data.studentId || '',
+          guide_name: data.guideName || '',
+          department: data.studentDepartment || '',
+          academic_year: '2026-2027',
+          institution: 'Institution Name',
+          description: data.abstract || ''
+        },
+        executive_summary: data.summary || data.abstract || 'Project analysis summary.',
+        sdg_analysis: [
+          {
+            sdg_id: 9,
+            name: data.targetSdg || 'SDG 9: Industry, Innovation and Infrastructure',
+            classification: 'primary',
+            alignment_score: parseInt(data.aiScore) || 85,
+            confidence: (parseInt(data.aiScore) || 85) / 100,
+            reason: 'Mapped based on project analysis.',
+            targets: [],
+            evidence: [],
+            missing_evidence: [],
+            recommended_kpis: []
+          }
+        ],
+        impact_analysis: {
+          environmental: { score: 85, analysis: 'Environmental impact analysis details.', key_factors: [], type: 'Estimated' },
+          social: { score: 80, analysis: 'Social impact analysis details.', key_factors: [], type: 'Estimated' },
+          economic: { score: 75, analysis: 'Economic impact analysis details.', key_factors: [], type: 'Estimated' }
+        },
+        scores: {
+          overall: parseInt(data.aiScore) || 85,
+          sdg_alignment: 85,
+          evidence: 80,
+          impact: 85,
+          measurability: 75,
+          scalability: 80,
+          sustainability: 90
+        },
+        kpis: ["Number of users reached", "Percentage reduction in emissions"],
+        strengths: ['Innovative approach', 'Clear problem statement'],
+        weaknesses: ["Lacks clear financial model"],
+        recommendations: ["Partner with local NGOs", "Improve data collection framework"],
+        future_potential: 'High potential for scaling.',
+        conclusion: 'The project aligns well with SDG goals, but requires Gemini API Key for deep analysis.'
+      };
+    }
+
+    // 2. Render React Component to Static HTML String
+    const htmlContent = renderToStaticMarkup(ReportTemplate({ report: aiReportData as any }));
+
+    // 3. Generate PDF using our high-fidelity renderer
+    const pdfBuffer = await generatePdfFromHtml(htmlContent);
+
+    // 4. Return the PDF buffer directly to the user
+    return new NextResponse(pdfBuffer as any, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="NOVELLEYX_SDG_Report_${aiReportData.project.title.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf"`
+      }
+    });
+
+  } catch (error) {
+    console.error("PDF Generation Error (POST):", error);
     return NextResponse.json(
       { error: "Failed to generate PDF report" },
       { status: 500 }

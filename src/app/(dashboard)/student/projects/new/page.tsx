@@ -239,6 +239,7 @@ function ProjectFormContent() {
       if (!response.ok) throw new Error(initData.detail || initData.message || "Failed to queue job");
       
       const jobId = initData.job_id;
+      const projectId = initData.project_id;
       let jobCompleted = false;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let finalResult: any = null;
@@ -285,6 +286,7 @@ function ProjectFormContent() {
       }
 
       const newProj = {
+        id: projectId,
         studentId: user?.id || "STD-000",
         studentName,
         studentDepartment: department,
@@ -492,13 +494,22 @@ function ProjectFormContent() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="department" className="text-gray-700 dark:text-gray-300 font-semibold">Department</Label>
-              <Input 
+              <select 
                 id="department" 
                 name="department" 
-                value={user?.department || "Unknown"} 
-                readOnly 
-                className="bg-gray-50 dark:bg-[#111827] text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 font-medium cursor-not-allowed h-12" 
-              />
+                defaultValue={user?.department || ""} 
+                className="flex h-12 w-full rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#111827] px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 text-gray-900 dark:text-gray-100 shadow-sm" 
+                required
+              >
+                <option value="">Select Department</option>
+                <option value="CSE">Computer Science and Engineering (CSE)</option>
+                <option value="ECE">Electronics and Communication Engineering (ECE)</option>
+                <option value="EEE">Electrical and Electronics Engineering (EEE)</option>
+                <option value="MECH">Mechanical Engineering (MECH)</option>
+                <option value="CIVIL">Civil Engineering (CIVIL)</option>
+                <option value="IT">Information Technology (IT)</option>
+                <option value="AERO">Aeronautical Engineering (AERO)</option>
+              </select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="year" className="text-gray-700 dark:text-gray-300 font-semibold">Academic Year</Label>
